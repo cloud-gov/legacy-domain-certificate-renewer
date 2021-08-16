@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Used to run the app and the worker from within Docker
+
+set -euo pipefail
+shopt -s inherit_errexit
+
+cd "$(dirname "$0")/.."
+
+
+docker/start-servers.sh
+
+wait
