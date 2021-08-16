@@ -1,0 +1,244 @@
+---
+cf-manifest-vars: &cf-manifest-vars
+  vars:
+    APP_NAME: ((name))
+
+jobs:
+
+- name: reconfigure
+  serial: true
+  plan:
+  - get: src
+    params: {depth: 1}
+    trigger: true
+  - get: secrets
+    # Remember to manually trigger a new build if you upload a new version
+    # of the credentials file.
+    trigger: false
+  - set_pipeline: ((name))
+    file: src/ci/pipeline.yml
+    var_files:
+    - secrets/((name)).yml
+
+- name: test
+  plan:
+  - get: src
+    params: {depth: 1}
+    trigger: true
+    passed: [reconfigure]
+
+  - put: dev-docker-image
+    # We push this docker image _only_ so that we can use it in the next task
+    # below.  :shrug: concourse.
+    params:
+      build: src
+      dockerfile: src/docker/Dockerfile.dev
+      tag_as_latest: true
+      cache: true
+
+  - task: test
+    # Run the tests using the image pushed above.
+    image: dev-docker-image
+    config:
+      platform: linux
+      params:
+        TMPDIR: /tmp
+      run:
+        path: /app/docker/tests
+
+- name: dev
+  plan:
+  - in_parallel:
+    - get: src
+      params: {depth: 1}
+      trigger: true
+      passed: [test]
+    - get: pipeline-tasks
+  - put: cf-dev
+    params:
+      path: src
+      manifest: src/manifest.yml
+      show_app_log: true
+      <<: *cf-manifest-vars
+      environment_variables:
+        ENV: development
+
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy legacy-domain-certificate-renewer on development
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on development
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+
+- name: staging
+  plan:
+  - in_parallel:
+    - get: src
+      params: {depth: 1}
+      trigger: true
+      passed: [dev]
+    - get: pipeline-tasks
+  - put: cf-staging
+    params:
+      path: src
+      manifest: src/manifest.yml
+      show_app_log: true
+      <<: *cf-manifest-vars
+      environment_variables:
+        ENV: staging
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy legacy-domain-certificate-renewer on staging
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on staging
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+
+- name: production
+  plan:
+  - in_parallel:
+    - get: src
+      params: {depth: 1}
+      trigger: true
+      passed: [staging]
+    - get: pipeline-tasks
+  - put: cf-production
+    params:
+      path: src
+      manifest: src/manifest.yml
+      show_app_log: true
+      <<: *cf-manifest-vars
+      environment_variables:
+        ENV: production
+
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy legacy-domain-certificate-renewer on production
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on production
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+############################
+#  RESOURCES
+
+resources:
+
+- name: secrets
+  type: s3-iam
+  icon: cloud-lock
+  source:
+    region_name: ((concourse-varz-bucket-region))
+    bucket: ((concourse-varz-bucket))
+    versioned_file: ((name)).yml
+
+- name: src
+  type: git
+  icon: github-circle
+  check_every: 10s
+  source:
+    uri: https://github.com/cloud-gov/((name))
+    branch: ((git-branch))
+
+- name: dev-docker-image
+  type: docker-image
+  icon: docker
+  source:
+    email: ((docker-email))
+    username: ((docker-username))
+    password: ((docker-password))
+    repository: ((docker-image-dev))
+
+- name: cf-dev
+  type: cf
+  icon: cloud-upload
+  source:
+    api: ((dev-cf-api-endpoint))
+    username: ((dev-cf-username))
+    password: ((dev-cf-password))
+    organization: ((cf-organization))
+    space: ((cf-space))
+
+- name: cf-staging
+  type: cf
+  icon: cloud-upload
+  source:
+    api: ((staging-cf-api-endpoint))
+    username: ((staging-cf-username))
+    password: ((staging-cf-password))
+    organization: ((cf-organization))
+    space: ((cf-space))
+
+- name: cf-production
+  type: cf
+  icon: cloud-upload
+  source:
+    api: ((production-cf-api-endpoint))
+    username: ((production-cf-username))
+    password: ((production-cf-password))
+    organization: ((cf-organization))
+    space: ((cf-space))
+
+- name: slack
+  type: slack-notification
+  source:
+    url: ((slack-webhook-url))
+
+- name: pipeline-tasks
+  type: git
+  icon: github-circle
+  source:
+    uri: ((pipeline-tasks-git-url))
+    branch: ((pipeline-tasks-git-branch))
+
+
+############################
+#  RESOURCE TYPES
+
+resource_types:
+
+- name: s3-iam
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource
+
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource

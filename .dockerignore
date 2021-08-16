@@ -1,0 +1,13 @@
+Dockerfile
+.dockerignore
+.git
+.gitignore
+do-not-commit
+docs
+*.md
+dev
+do-not-commit
+logs
+tmp
+ci
+venv
