@@ -6,6 +6,9 @@ applications:
   command: python3 -m renewer
   no-route: true
   health-check-type: process
+  services:
+  - ((CDN_DB_NAME))
+  - ((DOMAIN_DB_NAME))
   buildpacks:
   - python_buildpack
   env:
