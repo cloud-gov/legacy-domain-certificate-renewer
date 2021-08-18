@@ -1,5 +1,7 @@
 import pytest
 
+from tests.lib.database import clean_db
+
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "focus: Only run this test.")
