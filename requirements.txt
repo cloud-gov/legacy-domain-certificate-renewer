@@ -4,3 +4,29 @@
 #
 #    ./dev update-requirements
 #
+cfenv==0.5.3
+    # via -r pip-tools/requirements.in
+environs==9.3.3
+    # via -r pip-tools/requirements.in
+furl==2.1.2
+    # via cfenv
+greenlet==1.1.1
+    # via sqlalchemy
+marshmallow==3.13.0
+    # via environs
+orderedmultidict==1.0.1
+    # via furl
+psycopg2==2.9.1
+    # via -r pip-tools/requirements.in
+python-dotenv==0.19.0
+    # via environs
+six==1.16.0
+    # via
+    #   furl
+    #   sqlalchemy-utils
+sqlalchemy==1.4.23
+    # via
+    #   -r pip-tools/requirements.in
+    #   sqlalchemy-utils
+sqlalchemy-utils==0.37.8
+    # via -r pip-tools/requirements.in

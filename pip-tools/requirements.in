@@ -1,0 +1,5 @@
+cfenv
+environs
+sqlalchemy
+sqlalchemy-utils
+psycopg2
