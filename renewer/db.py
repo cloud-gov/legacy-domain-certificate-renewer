@@ -4,7 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from renewer.extensions import config
-from renewer.models import CdnBase, DomainBase
+from renewer.cdn_models import CdnBase
+from renewer.domain_models import DomainBase
 
 cdn_engine = create_engine(config.CDN_BROKER_DATABASE_URI)
 domain_engine = create_engine(config.DOMAIN_BROKER_DATABASE_URI)
