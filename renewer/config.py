@@ -26,6 +26,7 @@ class Config:
         self.env_parser = Env()
         self.cf_env_parser = AppEnv()
         self.ENV = self.env_parser("ENV")
+        self.RENEW_BEFORE_DAYS = 30
 
 
 class AppConfig(Config):

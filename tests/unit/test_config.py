@@ -84,3 +84,4 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     config = config_from_env()
     assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
     assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
+    assert config.RENEW_BEFORE_DAYS == 30
