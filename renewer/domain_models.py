@@ -10,6 +10,8 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
     StringEncryptedType,
 )
 
+from renewer.extensions import config
+
 DomainBase = declarative.declarative_base()
 
 
@@ -71,7 +73,7 @@ class DomainCertificate(DomainBase):
     @property
     def needs_renewal(self):
         now = datetime.datetime.now(datetime.timezone.utc)
-        return self.expires < now + datetime.timedelta(days=30)
+        return self.expires < now + datetime.timedelta(days=config.RENEW_BEFORE_DAYS)
 
 
 class DomainUserData(DomainBase):
