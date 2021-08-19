@@ -27,6 +27,7 @@ class Config:
         self.cf_env_parser = AppEnv()
         self.ENV = self.env_parser("ENV")
 
+
 class AppConfig(Config):
     def __init__(self):
         super().__init__()
@@ -34,6 +35,7 @@ class AppConfig(Config):
         self.CDN_BROKER_DATABASE_URI = normalize_db_url(cdn_db.credentials["uri"])
         alb_db = self.cf_env_parser.get_service(name="rds-domain-broker")
         self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])
+
 
 class LocalConfig(Config):
     def __init__(self):
@@ -45,11 +47,14 @@ class LocalConfig(Config):
             "postgresql://localhost/local-development-domain"
         )
 
+
 class DevelopmentConfig(AppConfig):
     pass
 
+
 class StagingConfig(AppConfig):
     pass
+
 
 class ProductionConfig(AppConfig):
     pass

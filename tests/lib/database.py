@@ -24,4 +24,3 @@ def clean_db():
         session.execute("TRUNCATE TABLE alb_proxies", bind=domain_engine)
         session.commit()
         session.close()
-

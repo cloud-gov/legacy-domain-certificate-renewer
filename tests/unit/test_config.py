@@ -70,6 +70,7 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("VCAP_SERVICES", vcap_services)
     monkeypatch.setenv("ENV", "local")
 
+
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
 def test_config_doesnt_explode(env, monkeypatch, mocked_env):
     monkeypatch.setenv("ENV", env)
@@ -83,4 +84,3 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     config = config_from_env()
     assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
     assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
-
