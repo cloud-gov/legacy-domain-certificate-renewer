@@ -3,7 +3,7 @@ applications:
 - name: ((APP_NAME))
   memory: 256M
   instances: 1
-  command: python3 -m renewer
+  command: ./scripts/run-worker
   no-route: true
   health-check-type: process
   services:
