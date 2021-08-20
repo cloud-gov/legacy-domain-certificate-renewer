@@ -26,13 +26,3 @@ if ! pgrep -x pebble > /dev/null; then
       > "$LOGS/pebble.log" 2>&1 &
   )
 fi
-
-if ! pgrep -x pebble-challtestsrv > /dev/null; then
-  echo "Starting Pebble Challenge Test Server"
-  (
-    cd /app
-    pebble-challtestsrv \
-      > "$LOGS/pebble-challtestsrv.log" 2>&1 &
-  )
-fi
-
