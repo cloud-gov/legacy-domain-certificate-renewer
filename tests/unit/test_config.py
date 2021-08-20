@@ -69,6 +69,9 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("VCAP_APPLICATION", vcap_application)
     monkeypatch.setenv("VCAP_SERVICES", vcap_services)
     monkeypatch.setenv("ENV", "local")
+    monkeypatch.setenv("AWS_GOVCLOUD_REGION", "us-gov-west-1")
+    monkeypatch.setenv("AWS_GOVCLOUD_ACCESS_KEY_ID", "ASIANOTAREALKEYGOV")
+    monkeypatch.setenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY_GOV")
 
 
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
@@ -85,3 +88,6 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
     assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
     assert config.RENEW_BEFORE_DAYS == 30
+    assert config.AWS_GOVCLOUD_REGION == "us-gov-west-1"
+    assert config.AWS_GOVCLOUD_ACCESS_KEY_ID == "ASIANOTAREALKEYGOV"
+    assert config.AWS_GOVCLOUD_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY_GOV"

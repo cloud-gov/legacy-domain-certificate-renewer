@@ -10,7 +10,7 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
     StringEncryptedType,
 )
 
-from renewer.extensions import config
+from renewer.extensions import config, alb, iam_govcloud
 
 DomainBase = declarative.declarative_base()
 
@@ -51,11 +51,31 @@ class DomainRoute(DomainBase):
     def needs_renewal(self):
         return all([c.needs_renewal for c in self.certificates])
 
+    def backport_manual_certs(self):
+        """
+        We were for some time manually rotating certs without updating the database
+        This backports certs that exist in IAM/on ELBs into the database, so we can
+        use the same logic for all rotations
+        """
+        # get the certs for the alb
+        paginator = alb.get_paginator("describe_listener_certificates")
+        cert_pages = paginator.paginate(ListenerArn=self.alb_proxy.listener_arn)
+        for cert_page in cert_pages:
+            for cert in cert_page["Certificates"]:
+                if self.instance_id in cert["CertificateArn"]:
+                    arn = cert["CertificateArn"]
+
+                    if any(c.arn == arn for c in self.certificates):
+                        # we already know about this one
+                        continue
+
+                    return DomainCertificate.create_cert_for_arn(arn, self)
+
 
 class DomainCertificate(DomainBase):
     __tablename__ = "certificates"
 
-    id = sa.Column(sa.Integer, primary_key=True)
+    id = sa.Column(sa.Integer, sa.Sequence("certificates_id_seq"), primary_key=True)
     created_at = sa.Column(postgresql.TIMESTAMP)
     updated_at = sa.Column(postgresql.TIMESTAMP)
     deleted_at = sa.Column(postgresql.TIMESTAMP)
@@ -74,6 +94,23 @@ class DomainCertificate(DomainBase):
     def needs_renewal(self):
         now = datetime.datetime.now(datetime.timezone.utc)
         return self.expires < now + datetime.timedelta(days=config.RENEW_BEFORE_DAYS)
+
+    @classmethod
+    def create_cert_for_arn(cls, arn, route):
+        name = arn.split("/")[-1]
+        data = iam_govcloud.get_server_certificate(ServerCertificateName=name)
+        data = data["ServerCertificate"]
+        expires = data["ServerCertificateMetadata"]["Expiration"]
+        expires = datetime.datetime.strptime(expires, "%Y-%m-%dT%H:%M:%SZ")
+
+        cert = DomainCertificate()
+        cert.route = route
+        cert.created_at = datetime.datetime.now()
+        cert.arn = arn
+        cert.expires = expires
+        cert.name = name
+
+        return cert
 
 
 class DomainUserData(DomainBase):
