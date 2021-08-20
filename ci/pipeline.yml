@@ -4,6 +4,13 @@ cf-manifest-vars: &cf-manifest-vars
     APP_NAME: ((name))
     CDN_DB_NAME: ((cdn_db_name))
     DOMAIN_DB_NAME: ((domain_db_name))
+    REDIS_NAME: ((redis_name))
+
+create-redis-service-params: &create-redis-service-params
+  APP_NAME: ((name))
+  SVC_SERVICE: ((redis_service))
+  SVC_PLAN: ((redis_plan))
+  SVC_NAME: ((redis_name))
 
 jobs:
 
@@ -56,6 +63,11 @@ jobs:
       trigger: true
       passed: [test]
     - get: pipeline-tasks
+  - task: create-redis
+    file: pipeline-tasks/ensure-misbehaved-service.yml
+    params:
+      <<: *cf-creds-dev
+      <<: *create-redis-service-param
   - put: cf-dev
     params:
       path: src
@@ -64,6 +76,10 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: development
+        AWS_GOVCLOUD_REGION: ((dev-aws-govcloud-region))
+        AWS_GOVCLOUD_SECRET_ACCESS_KEY: ((dev-aws-govcloud-secret-access-key))
+        AWS_GOVCLOUD_ACCESS_KEY_ID: ((dev-aws-govcloud-access-key-id))
+
 
   on_failure:
     put: slack
@@ -93,6 +109,11 @@ jobs:
       trigger: true
       passed: [dev]
     - get: pipeline-tasks
+  - task: create-redis
+    file: pipeline-tasks/ensure-misbehaved-service.yml
+    params:
+      <<: *cf-creds-dev
+      <<: *create-redis-service-param
   - put: cf-staging
     params:
       path: src
@@ -101,6 +122,9 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: staging
+        AWS_GOVCLOUD_REGION: ((staging-aws-govcloud-region))
+        AWS_GOVCLOUD_SECRET_ACCESS_KEY: ((staging-aws-govcloud-secret-access-key))
+        AWS_GOVCLOUD_ACCESS_KEY_ID: ((staging-aws-govcloud-access-key-id))
   on_failure:
     put: slack
     params:
@@ -129,6 +153,11 @@ jobs:
       trigger: true
       passed: [staging]
     - get: pipeline-tasks
+  - task: create-redis
+    file: pipeline-tasks/ensure-misbehaved-service.yml
+    params:
+      <<: *cf-creds-dev
+      <<: *create-redis-service-param
   - put: cf-production
     params:
       path: src
@@ -137,6 +166,9 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: production
+        AWS_GOVCLOUD_REGION: ((production-aws-govcloud-region))
+        AWS_GOVCLOUD_SECRET_ACCESS_KEY: ((production-aws-govcloud-secret-access-key))
+        AWS_GOVCLOUD_ACCESS_KEY_ID: ((production-aws-govcloud-access-key-id))
 
   on_failure:
     put: slack

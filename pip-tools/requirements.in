@@ -1,6 +1,7 @@
 boto3
 cfenv
 environs
+huey
 sqlalchemy
 sqlalchemy-utils
 psycopg2

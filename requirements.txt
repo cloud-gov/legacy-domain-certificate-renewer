@@ -18,6 +18,8 @@ furl==2.1.2
     # via cfenv
 greenlet==1.1.1
     # via sqlalchemy
+huey==2.4.0
+    # via -r pip-tools/requirements.in
 jmespath==0.10.0
     # via
     #   boto3

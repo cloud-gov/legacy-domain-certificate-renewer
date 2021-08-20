@@ -59,6 +59,22 @@ def vcap_services():
                 "tags": ["database", "RDS"],
             }
         ],
+        "redis": [
+            {
+                "credentials": {
+                    "host": "my-redis-hostname",
+                    "password": "my-redis-password",
+                    "port": "my-redis-port",
+                    "ports": {"6379/tcp": "my-redis-port-tuple"},
+                    "uri": "my-redis-uri",
+                },
+                "instance_name": "my-app-name-redis",
+                "label": "redis",
+                "name": "my-app-name-redis",
+                "plan": "standard-ha",
+                "tags": ["redis", "Elasticache"],
+            }
+        ],
     }
 
     return json.dumps(data)
@@ -91,3 +107,6 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.AWS_GOVCLOUD_REGION == "us-gov-west-1"
     assert config.AWS_GOVCLOUD_ACCESS_KEY_ID == "ASIANOTAREALKEYGOV"
     assert config.AWS_GOVCLOUD_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY_GOV"
+    assert config.REDIS_HOST == "my-redis-hostname"
+    assert config.REDIS_PORT == "my-redis-port"
+    assert config.REDIS_PASSWORD == "my-redis-password"
