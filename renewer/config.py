@@ -1,3 +1,5 @@
+import re 
+
 from cfenv import AppEnv
 from environs import Env
 
@@ -5,9 +7,9 @@ from environs import Env
 def config_from_env():
     environments = {
         "local": LocalConfig,
-        "development": DevelopmentConfig,
-        "staging": StagingConfig,
-        "production": ProductionConfig,
+        "development": AppConfig,
+        "staging": AppConfig,
+        "production": AppConfig,
     }
     env = Env()
     return environments[env("ENV")]()
@@ -41,6 +43,14 @@ class AppConfig(Config):
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = self.env_parser(
             "AWS_GOVCLOUD_SECRET_ACCESS_KEY"
         )
+        redis = self.cf_env_parser.get_service(label=re.compile("redis.*"))
+
+        if not redis:
+            raise MissingRedisError
+
+        self.REDIS_HOST = redis.credentials["host"]
+        self.REDIS_PORT = redis.credentials["port"]
+        self.REDIS_PASSWORD = redis.credentials["password"]
 
 
 class LocalConfig(Config):
@@ -55,15 +65,3 @@ class LocalConfig(Config):
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
-
-
-class DevelopmentConfig(AppConfig):
-    pass
-
-
-class StagingConfig(AppConfig):
-    pass
-
-
-class ProductionConfig(AppConfig):
-    pass
