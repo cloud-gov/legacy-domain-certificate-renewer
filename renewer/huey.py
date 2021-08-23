@@ -19,9 +19,9 @@ connection_pool = ConnectionPool(
 huey = RedisHuey(connection_pool=connection_pool)
 
 # Normal task, no retries
-nonretriable_task = huey.context_task(db.session_handler)
+nonretriable_task = huey.context_task(db.session_handler, as_argument=True)
 
 # These tasks retry every 10 minutes for four hours.
 retriable_task = huey.context_task(
-    db.session_handler, retries=6 * 4, retry_delay=10 * 60
+    db.session_handler, as_argument=True, retries=6 * 4, retry_delay=10 * 60
 )
