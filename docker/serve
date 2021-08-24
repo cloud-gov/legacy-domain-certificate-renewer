@@ -9,5 +9,6 @@ cd "$(dirname "$0")/.."
 
 
 docker/start-servers.sh
+alembic upgrade head
 
 wait

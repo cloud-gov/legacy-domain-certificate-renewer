@@ -1,4 +1,4 @@
-import re 
+import re
 
 from cfenv import AppEnv
 from environs import Env

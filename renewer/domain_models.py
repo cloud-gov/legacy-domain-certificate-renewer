@@ -12,7 +12,16 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
 
 from renewer.extensions import config, alb, iam_govcloud
 
-DomainBase = declarative.declarative_base()
+convention = {
+    "ix": "idx_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+metadata = sa.MetaData(naming_convention=convention)
+DomainBase = declarative.declarative_base(metadata=metadata)
 
 
 def find_active_instances(session):
@@ -33,14 +42,21 @@ class DomainRoute(DomainBase):
     __tablename__ = "routes"
 
     instance_id = sa.Column("guid", sa.Text, primary_key=True)
-    state = sa.Column(sa.Text)
+    state = sa.Column(sa.Text, nullable=False, index=True)
     domains = sa.Column(postgresql.ARRAY(sa.Text))
     challenge_json = sa.Column(postgresql.BYTEA)
     user_data_id = sa.Column(sa.Integer)
-    alb_proxy_arn = sa.Column(sa.Text, sa.ForeignKey(DomainAlbProxy.alb_arn))
-    alb_proxy = orm.relationship(DomainAlbProxy)
+    alb_proxy_arn = sa.Column(sa.Text)
+    alb_proxy = orm.relationship(
+        DomainAlbProxy,
+        foreign_keys=[alb_proxy_arn],
+        primaryjoin="DomainRoute.alb_proxy_arn == DomainAlbProxy.alb_arn",
+    )
     certificates = orm.relationship(
-        "DomainCertificate", order_by="desc(DomainCertificate.expires)"
+        "DomainCertificate",
+        order_by="desc(DomainCertificate.expires)",
+        primaryjoin="(foreign(DomainCertificate.route_guid)) == DomainRoute.instance_id",
+        backref="route",
     )
 
     def domain_external_list(self):
@@ -78,9 +94,8 @@ class DomainCertificate(DomainBase):
     id = sa.Column(sa.Integer, sa.Sequence("certificates_id_seq"), primary_key=True)
     created_at = sa.Column(postgresql.TIMESTAMP)
     updated_at = sa.Column(postgresql.TIMESTAMP)
-    deleted_at = sa.Column(postgresql.TIMESTAMP)
-    route_guid = sa.Column(sa.Integer, sa.ForeignKey(DomainRoute.instance_id))
-    route = orm.relationship(DomainRoute, back_populates="certificates")
+    deleted_at = sa.Column(postgresql.TIMESTAMP, index=True)
+    route_guid = sa.Column(sa.Integer)
     domain = sa.Column(sa.Text)
     # cert_url is the Let's Encrypt URL for the certificate
     cert_url = sa.Column(sa.Text)
@@ -88,7 +103,7 @@ class DomainCertificate(DomainBase):
     certificate = sa.Column(postgresql.BYTEA)
     arn = sa.Column(sa.Text)
     name = sa.Column(sa.Text)
-    expires = sa.Column(postgresql.TIMESTAMP)
+    expires = sa.Column(postgresql.TIMESTAMP, index=True)
 
     @property
     def needs_renewal(self):
@@ -119,7 +134,7 @@ class DomainUserData(DomainBase):
     id = sa.Column(sa.Integer, primary_key=True)
     created_at = sa.Column(postgresql.TIMESTAMP)
     updated_at = sa.Column(postgresql.TIMESTAMP)
-    deleted_at = sa.Column(postgresql.TIMESTAMP)
+    deleted_at = sa.Column(postgresql.TIMESTAMP, index=True)
     email = sa.Column(sa.Text, nullable=False)
     reg = sa.Column(postgresql.BYTEA)
     key = sa.Column(postgresql.BYTEA)
