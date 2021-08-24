@@ -51,3 +51,4 @@ dmypy.json
 !.gitkeep
 
 .vscode
+.DS_Store
