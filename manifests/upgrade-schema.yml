@@ -1,0 +1,14 @@
+---
+applications:
+- name: ((APP_NAME))
+  memory: 256M
+  instances: 3
+  command: sleep 3600
+  services:
+  - ((CDN_DB_NAME))
+  - ((DOMAIN_DB_NAME))
+  - ((REDIS_NAME))
+  buildpacks:
+  - python_buildpack
+  env:
+    ENV: ((ENV))
