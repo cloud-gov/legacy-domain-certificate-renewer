@@ -26,7 +26,7 @@ cf push \
 # This is just to put logs in the concourse output.
 (cf logs "$APP_NAME" | grep "TASK/db-upgrade") &
 
-cmd="alembic upgrade head"
+cmd="alembic -c migrations/alembic.ini upgrade head"
 id=$(cf run-task "$APP_NAME" --command "$cmd" --name="db-upgrade" | grep "task id:" | awk '{print $3}')
 
 set +x
