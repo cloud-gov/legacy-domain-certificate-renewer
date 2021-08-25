@@ -11,6 +11,8 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
 )
 
 from renewer.extensions import config, alb, iam_govcloud
+from renewer.state import OperationState
+from renewer.action import Action
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -58,6 +60,7 @@ class DomainRoute(DomainBase):
         primaryjoin="(foreign(DomainCertificate.route_guid)) == DomainRoute.instance_id",
         backref="route",
     )
+    operations = orm.relationship("DomainOperation", backref="route", lazy="dynamic")
 
     def domain_external_list(self):
         """to match CdnRoute"""
@@ -86,6 +89,12 @@ class DomainRoute(DomainBase):
                         continue
 
                     return DomainCertificate.create_cert_for_arn(arn, self)
+
+    def renew(self):
+        operation = DomainOperation()
+        operation.route = self
+        sess = orm.object_session(self)
+        sess.add(operation)
 
 
 class DomainCertificate(DomainBase):
@@ -138,3 +147,22 @@ class DomainUserData(DomainBase):
     email = sa.Column(sa.Text, nullable=False)
     reg = sa.Column(postgresql.BYTEA)
     key = sa.Column(postgresql.BYTEA)
+
+
+class DomainOperation(DomainBase):
+    __tablename__ = "operations"
+
+    id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
+    route_guid = sa.Column(sa.ForeignKey(DomainRoute.instance_id), nullable=False)
+    state = sa.Column(
+        sa.Text,
+        default=OperationState.IN_PROGRESS.value,
+        server_default=OperationState.IN_PROGRESS.value,
+        nullable=False,
+    )
+    action = sa.Column(
+        sa.Text,
+        default=Action.RENEW.value,
+        server_default=Action.RENEW.value,
+        nullable=False,
+    )

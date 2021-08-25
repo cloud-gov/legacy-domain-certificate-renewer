@@ -10,7 +10,9 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
     StringEncryptedType,
 )
 
+from renewer.action import Action
 from renewer.extensions import config
+from renewer.state import OperationState
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -79,9 +81,16 @@ class CdnRoute(CdnBase):
     # provisioning
     # provisioned
     state = sa.Column(sa.Text, index=True, nullable=False)
+    operations = orm.relationship("CdnOperation", backref="route", lazy="dynamic")
 
     def domain_external_list(self):
         return self.domain_external.split(",")
+
+    def renew(self):
+        operation = CdnOperation()
+        operation.route = self
+        sess = orm.object_session(self)
+        sess.add(operation)
 
 
 class CdnCertificate(CdnBase):
@@ -98,3 +107,22 @@ class CdnCertificate(CdnBase):
     # certificate is the actual body of the certificate chain
     certificate = sa.Column(postgresql.BYTEA)
     expires = sa.Column(postgresql.TIMESTAMP, index=True)
+
+
+class CdnOperation(CdnBase):
+    __tablename__ = "operations"
+
+    id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
+    route_id = sa.Column(sa.ForeignKey(CdnRoute.id), nullable=False)
+    state = sa.Column(
+        sa.Text,
+        default=OperationState.IN_PROGRESS.value,
+        server_default=OperationState.IN_PROGRESS.value,
+        nullable=False,
+    )
+    action = sa.Column(
+        sa.Text,
+        default=Action.RENEW.value,
+        server_default=Action.RENEW.value,
+        nullable=False,
+    )
