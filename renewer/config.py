@@ -10,6 +10,7 @@ def config_from_env():
         "development": AppConfig,
         "staging": AppConfig,
         "production": AppConfig,
+        "upgrade-schema": UpgradeSchemaConfig,
     }
     env = Env()
     return environments[env("ENV")]()
@@ -65,3 +66,12 @@ class LocalConfig(Config):
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
+
+
+class UpgradeSchemaConfig(Config):
+    def __init__(self):
+        super().__init__()
+        cdn_db = self.cf_env_parser.get_service(name="rds-cdn-broker")
+        self.CDN_BROKER_DATABASE_URI = normalize_db_url(cdn_db.credentials["uri"])
+        alb_db = self.cf_env_parser.get_service(name="rds-domain-broker")
+        self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])

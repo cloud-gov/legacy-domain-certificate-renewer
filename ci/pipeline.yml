@@ -3,10 +3,6 @@ upgrade-schema-vars: &upgrade-schema-vars
   APP_NAME: ((name))-db-upgrade
   CDN_DB_NAME: ((cdn_db_name))
   DOMAIN_DB_NAME: ((domain_db_name))
-  REDIS_NAME: ((redis_name))
-  AWS_GOVCLOUD_REGION: not-important
-  AWS_GOVCLOUD_SECRET_ACCESS_KEY: not-important
-  AWS_GOVCLOUD_ACCESS_KEY_ID: not-important
 
 cf-manifest-vars: &cf-manifest-vars
   vars:
@@ -105,7 +101,6 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
-      ENV: development
       <<: *cf-creds-dev
       <<: *upgrade-schema-vars
   - put: cf-dev
@@ -162,7 +157,6 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
-      ENV: staging
       <<: *cf-creds-staging
       <<: *upgrade-schema-vars
   - put: cf-staging
@@ -217,7 +211,6 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
-      ENV: production
       <<: *cf-creds-production
       <<: *upgrade-schema-vars
   - put: cf-production
