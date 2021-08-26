@@ -19,21 +19,21 @@ create-redis-service-params: &create-redis-service-params
   SVC_NAME: ((redis_name))
 
 cf-creds-dev: &cf-creds-dev
-  CF_API_URL: ((dev-cf-api-url))
+  CF_API_URL: ((dev-cf-api-endpoint))
   CF_USERNAME: ((dev-cf-username))
   CF_PASSWORD: ((dev-cf-password))
   CF_ORGANIZATION: ((cf-organization))
   CF_SPACE: ((cf-space))
 
 cf-creds-staging: &cf-creds-staging
-  CF_API_URL: ((staging-cf-api-url))
+  CF_API_URL: ((staging-cf-api-endpoint))
   CF_USERNAME: ((staging-cf-username))
   CF_PASSWORD: ((staging-cf-password))
   CF_ORGANIZATION: ((cf-organization))
   CF_SPACE: ((cf-space))
 
 cf-creds-production: &cf-creds-production
-  CF_API_URL: ((production-cf-api-url))
+  CF_API_URL: ((production-cf-api-endpoint))
   CF_USERNAME: ((production-cf-username))
   CF_PASSWORD: ((production-cf-password))
   CF_ORGANIZATION: ((cf-organization))
