@@ -110,3 +110,13 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.REDIS_HOST == "my-redis-hostname"
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"
+
+
+def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
+    monkeypatch.setenv("VCAP_APPLICATION", vcap_application)
+    monkeypatch.setenv("VCAP_SERVICES", vcap_services)
+    monkeypatch.setenv("ENV", "upgrade-schema")
+    config = config_from_env()
+    assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
+    assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
+

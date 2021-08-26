@@ -15,9 +15,8 @@ cf push \
   -i 1 \
   --var CDN_DB_NAME="$CDN_DB_NAME" \
   --var DOMAIN_DB_NAME="$DOMAIN_DB_NAME" \
-  --var REDIS_NAME="$REDIS_NAME" \
   --var APP_NAME="$APP_NAME" \
-  --var ENV="$ENV" \
+  --var ENV="upgrade-schema" \
   --no-route \
   --health-check-type=process \
   -c "sleep 3600" \
