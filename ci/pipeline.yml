@@ -4,6 +4,9 @@ upgrade-schema-vars: &upgrade-schema-vars
   CDN_DB_NAME: ((cdn_db_name))
   DOMAIN_DB_NAME: ((domain_db_name))
   REDIS_NAME: ((redis_name))
+  AWS_GOVCLOUD_REGION: not-important
+  AWS_GOVCLOUD_SECRET_ACCESS_KEY: not-important
+  AWS_GOVCLOUD_ACCESS_KEY_ID: not-important
 
 cf-manifest-vars: &cf-manifest-vars
   vars:
