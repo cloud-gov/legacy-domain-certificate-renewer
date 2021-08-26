@@ -10,7 +10,8 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
     StringEncryptedType,
 )
 
-from renewer.extensions import config, alb, iam_govcloud
+from renewer.aws import alb, iam_govcloud
+from renewer.extensions import config
 
 convention = {
     "ix": "idx_%(column_0_label)s",

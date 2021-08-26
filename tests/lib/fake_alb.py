@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytest
 
-from renewer.extensions import alb as real_alb
+from renewer.aws import alb as real_alb
 from tests.lib.fake_aws import FakeAWS
 
 
