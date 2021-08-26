@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from renewer.extensions import iam_commercial as real_iam_c
-from renewer.extensions import iam_govcloud as real_iam_g
+from renewer.aws import iam_commercial as real_iam_c
+from renewer.aws import iam_govcloud as real_iam_g
 from tests.lib.fake_aws import FakeAWS
 
 
