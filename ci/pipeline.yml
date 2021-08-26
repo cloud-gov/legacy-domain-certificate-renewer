@@ -102,6 +102,7 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
+      ENV: development
       <<: *cf-creds-dev
       <<: *upgrade-schema-vars
   - put: cf-dev
@@ -158,6 +159,7 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
+      ENV: staging
       <<: *cf-creds-staging
       <<: *upgrade-schema-vars
   - put: cf-staging
@@ -212,6 +214,7 @@ jobs:
   - task: upgrade-schema
     file: src/ci/upgrade-schema.yml
     params:
+      ENV: production
       <<: *cf-creds-production
       <<: *upgrade-schema-vars
   - put: cf-production
