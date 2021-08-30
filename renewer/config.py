@@ -10,6 +10,7 @@ def config_from_env():
         "development": AppConfig,
         "staging": AppConfig,
         "production": AppConfig,
+        "upgrade-schema": UpgradeSchemaConfig,
     }
     env = Env()
     return environments[env("ENV")]()
@@ -51,6 +52,7 @@ class AppConfig(Config):
         self.REDIS_HOST = redis.credentials["host"]
         self.REDIS_PORT = redis.credentials["port"]
         self.REDIS_PASSWORD = redis.credentials["password"]
+        self.REDIS_SSL = True
 
 
 class LocalConfig(Config):
@@ -65,3 +67,22 @@ class LocalConfig(Config):
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
+
+        self.REDIS_SSL = False
+        self.REDIS_HOST = "localhost"
+        self.REDIS_PORT = "3456"
+        self.REDIS_PASSWORD = "CHANGEME"
+
+
+class UpgradeSchemaConfig(Config):
+    def __init__(self):
+        super().__init__()
+        cdn_db = self.cf_env_parser.get_service(name="rds-cdn-broker")
+        self.CDN_BROKER_DATABASE_URI = normalize_db_url(cdn_db.credentials["uri"])
+        alb_db = self.cf_env_parser.get_service(name="rds-domain-broker")
+        self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])
+        # silly workaround - we don't have an AWS region, but the config blows up
+        # if it's none. Set it to an invalid string, so we can configure but not use boto clients
+        self.AWS_GOVCLOUD_REGION = "none"
+        self.AWS_GOVCLOUD_ACCESS_KEY_ID = None
+        self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = None

@@ -1,4 +1,5 @@
 import json
+import importlib
 
 import pytest
 from renewer.config import config_from_env
@@ -110,3 +111,86 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.REDIS_HOST == "my-redis-hostname"
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"
+
+    # import these here, so it's clear we're just importing them for this test
+    import renewer.extensions
+    import renewer.aws
+    import renewer.domain_models
+    import renewer.cdn_models
+    import renewer.huey
+
+    def reload():
+        # force a reload of these modules. Order is important
+        importlib.reload(renewer.extensions)
+        importlib.reload(renewer.aws)
+        importlib.reload(renewer.domain_models)
+        importlib.reload(renewer.cdn_models)
+        importlib.reload(renewer.huey)
+
+    raised = None
+    try:
+        # try to reload modules
+        reload()
+    except Exception as e:
+        # cache the exception, if any
+        raised = e
+    finally:
+        # reset the environment, so we don't mess with other tests
+        monkeypatch.delenv("VCAP_APPLICATION")
+        monkeypatch.delenv("VCAP_SERVICES")
+        monkeypatch.delenv("AWS_GOVCLOUD_REGION")
+        monkeypatch.delenv("AWS_GOVCLOUD_ACCESS_KEY_ID")
+        monkeypatch.delenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY")
+        monkeypatch.setenv("ENV", "local")
+        reload()
+
+    # make an assertion to pass/fail the test
+    assert raised is None
+
+
+
+def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
+    """
+    this is a special test, because the upgrade config assumes we don't want
+    anything to do with AWS or Redis, so we want to make sure we can instantiate
+    our models with that bare config
+    """
+    # import these here, so it's clear we're just importing them for this test
+    import renewer.extensions
+    import renewer.aws
+    import renewer.domain_models
+    import renewer.cdn_models
+
+    def reload():
+        # force a reload of these modules. Order is important
+        importlib.reload(renewer.extensions)
+        importlib.reload(renewer.aws)
+        importlib.reload(renewer.domain_models)
+        importlib.reload(renewer.cdn_models)
+
+    # set up environment
+    monkeypatch.setenv("VCAP_APPLICATION", vcap_application)
+    monkeypatch.setenv("VCAP_SERVICES", vcap_services)
+    monkeypatch.setenv("ENV", "upgrade-schema")
+    config = config_from_env()
+
+    # make assertions about the config
+    assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
+    assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
+
+    raised = None
+    try:
+        # try to reload modules
+        reload()
+    except Exception as e:
+        # cache the exception, if any
+        raised = e
+    finally:
+        # reset the environment, so we don't mess with other tests
+        monkeypatch.delenv("VCAP_APPLICATION")
+        monkeypatch.delenv("VCAP_SERVICES")
+        monkeypatch.setenv("ENV", "local")
+        reload()
+
+    # make an assertion to pass/fail the test
+    assert raised is None

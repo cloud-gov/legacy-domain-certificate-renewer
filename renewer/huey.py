@@ -1,4 +1,6 @@
+import logging
 from huey import RedisHuey
+from redis import ConnectionPool, SSLConnection
 
 from renewer.extensions import config
 from renewer import db

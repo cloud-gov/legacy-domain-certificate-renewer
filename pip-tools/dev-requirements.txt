@@ -101,6 +101,8 @@ python-editor==1.0.4
     # via
     #   -r pip-tools/../requirements.txt
     #   alembic
+redis==3.5.3
+    # via -r pip-tools/../requirements.txt
 regex==2021.8.3
     # via black
 s3transfer==0.5.0
