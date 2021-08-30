@@ -11,4 +11,3 @@ govcloud_session = boto3.Session(
 alb = govcloud_session.client("elbv2")
 iam_govcloud = govcloud_session.client("iam")
 iam_commercial = None
-

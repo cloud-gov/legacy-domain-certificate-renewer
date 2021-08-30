@@ -155,11 +155,6 @@ def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
         monkeypatch.delenv("VCAP_SERVICES")
         monkeypatch.setenv("ENV", "local")
         reload()
-    
+
     # make an assertion to pass/fail the test
     assert raised is None
-
-    
-
-
-
