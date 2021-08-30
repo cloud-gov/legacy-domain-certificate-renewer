@@ -75,6 +75,8 @@ class UpgradeSchemaConfig(Config):
         self.CDN_BROKER_DATABASE_URI = normalize_db_url(cdn_db.credentials["uri"])
         alb_db = self.cf_env_parser.get_service(name="rds-domain-broker")
         self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])
-        self.AWS_GOVCLOUD_REGION = None
+        # silly workaround - we don't have an AWS region, but the config blows up 
+        # if it's none. Set it to an invalid string, so we can configure but not use boto clients
+        self.AWS_GOVCLOUD_REGION = "none"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = None
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = None
