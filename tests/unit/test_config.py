@@ -112,6 +112,42 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"
 
+    # import these here, so it's clear we're just importing them for this test
+    import renewer.extensions
+    import renewer.aws
+    import renewer.domain_models
+    import renewer.cdn_models
+    import renewer.huey
+
+    def reload():
+        # force a reload of these modules. Order is important
+        importlib.reload(renewer.extensions)
+        importlib.reload(renewer.aws)
+        importlib.reload(renewer.domain_models)
+        importlib.reload(renewer.cdn_models)
+        importlib.reload(renewer.huey)
+
+    raised = None
+    try:
+        # try to reload modules
+        reload()
+    except Exception as e:
+        # cache the exception, if any
+        raised = e
+    finally:
+        # reset the environment, so we don't mess with other tests
+        monkeypatch.delenv("VCAP_APPLICATION")
+        monkeypatch.delenv("VCAP_SERVICES")
+        monkeypatch.delenv("AWS_GOVCLOUD_REGION")
+        monkeypatch.delenv("AWS_GOVCLOUD_ACCESS_KEY_ID")
+        monkeypatch.delenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY")
+        monkeypatch.setenv("ENV", "local")
+        reload()
+
+    # make an assertion to pass/fail the test
+    assert raised is None
+
+
 
 def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
     """

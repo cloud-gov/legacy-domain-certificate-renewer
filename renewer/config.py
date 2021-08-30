@@ -52,6 +52,7 @@ class AppConfig(Config):
         self.REDIS_HOST = redis.credentials["host"]
         self.REDIS_PORT = redis.credentials["port"]
         self.REDIS_PASSWORD = redis.credentials["password"]
+        self.REDIS_SSL = True
 
 
 class LocalConfig(Config):
@@ -66,6 +67,11 @@ class LocalConfig(Config):
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
+
+        self.REDIS_SSL = False
+        self.REDIS_HOST = "localhost"
+        self.REDIS_PORT = "3456"
+        self.REDIS_PASSWORD = "CHANGEME"
 
 
 class UpgradeSchemaConfig(Config):
