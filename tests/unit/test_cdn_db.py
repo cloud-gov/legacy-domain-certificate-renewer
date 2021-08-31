@@ -70,3 +70,20 @@ def test_cdnroute_model_can_return_multiple_domains_in_domain_external_list(clea
     assert sorted(route.domain_external_list()) == sorted(
         ["example1.com", "example2.com", "example3.com"]
     )
+
+
+def test_renew_creates_operation(clean_db):
+    route = cdn_models.CdnRoute()
+    route.state = "provisioned"
+    route.id = 1234
+    route.instance_id = "renew-me"
+    clean_db.add(route)
+    clean_db.commit()
+
+    route = clean_db.query(cdn_models.CdnRoute).filter_by(id=1234).first()
+    route.renew()
+
+    operation = clean_db.query(cdn_models.CdnOperation).filter_by(route_id=1234).first()
+    assert operation is not None
+    assert operation.route == route
+    assert operation.action == "renew"

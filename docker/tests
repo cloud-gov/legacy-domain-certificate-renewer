@@ -4,6 +4,7 @@ cd /app || (echo "Cannot find /app directory"; exit 2)
 set -xeuo pipefail
 
 ./docker/start-servers.sh
+alembic -c migrations/alembic.ini upgrade head
 
 
 if [[ "$#" -ge 1 ]] && [[ "$1" == "watch" ]]; then

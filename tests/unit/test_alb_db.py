@@ -10,6 +10,7 @@ from renewer.domain_models import (
     DomainAlbProxy,
     DomainCertificate,
     find_active_instances,
+    DomainOperation,
 )
 from renewer import extensions
 
@@ -203,3 +204,19 @@ def test_backport_from_manual_renewal_ignores_existing(clean_db, alb, iam_govclo
     )
     assert cert.expires is not None
     assert cert.name == "cf-domains-renew-me-2021-01-01_12-34-56"
+
+
+def test_renew_creates_operation(clean_db):
+    route = DomainRoute()
+    route.state = "provisioned"
+    route.instance_id = "renew-me"
+    clean_db.add(route)
+    clean_db.commit()
+
+    route = clean_db.query(DomainRoute).filter_by(instance_id="renew-me").first()
+    route.renew()
+
+    operation = clean_db.query(DomainOperation).filter_by(route_guid="renew-me").first()
+    assert operation is not None
+    assert operation.route == route
+    assert operation.action == "renew"
