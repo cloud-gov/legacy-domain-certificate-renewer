@@ -1,5 +1,7 @@
 import pytest
 
+from tests.lib.alb_fixtures import alb_route, proxy
+from tests.lib.cdn_fixtures import cdn_route
 from tests.lib.database import clean_db
 from tests.lib.fake_alb import alb
 from tests.lib.fake_iam import iam_govcloud

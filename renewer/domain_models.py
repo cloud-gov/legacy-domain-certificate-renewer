@@ -62,6 +62,7 @@ class DomainRoute(DomainBase):
         backref="route",
     )
     operations = orm.relationship("DomainOperation", backref="route", lazy="dynamic")
+    acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
 
     def domain_external_list(self):
         """to match CdnRoute"""
@@ -92,10 +93,15 @@ class DomainRoute(DomainBase):
                     return DomainCertificate.create_cert_for_arn(arn, self)
 
     def renew(self):
-        operation = DomainOperation()
-        operation.route = self
+        operation = self.create_renewal_operation()
         sess = orm.object_session(self)
         sess.add(operation)
+        sess.commit()
+
+    def create_renewal_operation(self):
+        operation = DomainOperation()
+        operation.route = self
+        return operation
 
 
 class DomainCertificate(DomainBase):
@@ -167,3 +173,15 @@ class DomainOperation(DomainBase):
         server_default=Action.RENEW.value,
         nullable=False,
     )
+
+
+class DomainAcmeUserV2(DomainBase):
+    __tablename__ = "acme_user_v2"
+
+    id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
+    email = sa.Column(sa.String, nullable=False)
+    uri = sa.Column(sa.String, nullable=False)
+    private_key_pem = sa.Column(sa.Text)
+    registration_json = sa.Column(sa.Text)
+
+    routes = orm.relation("DomainRoute", backref="acme_user", lazy="dynamic")

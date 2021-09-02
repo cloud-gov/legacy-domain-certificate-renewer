@@ -2,7 +2,7 @@ import pytest
 from renewer.db import session_handler, cdn_engine, domain_engine
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def clean_db():
     with session_handler() as session:
         session.execute("TRUNCATE TABLE user_data", bind=cdn_engine)

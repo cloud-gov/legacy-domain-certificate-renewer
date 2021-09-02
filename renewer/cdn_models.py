@@ -82,15 +82,21 @@ class CdnRoute(CdnBase):
     # provisioned
     state = sa.Column(sa.Text, index=True, nullable=False)
     operations = orm.relationship("CdnOperation", backref="route", lazy="dynamic")
+    acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
 
     def domain_external_list(self):
         return self.domain_external.split(",")
 
     def renew(self):
-        operation = CdnOperation()
-        operation.route = self
+        operation = self.create_renewal_operation()
         sess = orm.object_session(self)
         sess.add(operation)
+        sess.commit()
+
+    def create_renewal_operation(self):
+        operation = CdnOperation()
+        operation.route = self
+        return operation
 
 
 class CdnCertificate(CdnBase):
@@ -126,3 +132,15 @@ class CdnOperation(CdnBase):
         server_default=Action.RENEW.value,
         nullable=False,
     )
+
+
+class CdnAcmeUserV2(CdnBase):
+    __tablename__ = "acme_user_v2"
+
+    id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
+    email = sa.Column(sa.String, nullable=False)
+    uri = sa.Column(sa.String, nullable=False)
+    private_key_pem = sa.Column(sa.Text)
+    registration_json = sa.Column(sa.Text)
+
+    routes = orm.relation("CdnRoute", backref="acme_user", lazy="dynamic")
