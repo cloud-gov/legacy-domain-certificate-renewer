@@ -148,7 +148,6 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert raised is None
 
 
-
 def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
     """
     this is a special test, because the upgrade config assumes we don't want

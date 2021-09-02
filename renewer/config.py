@@ -49,6 +49,7 @@ class AppConfig(Config):
         if not redis:
             raise MissingRedisError
 
+        self.ACME_DIRECTORY = "https://acme-v02.api.letsencrypt.org/directory"
         self.REDIS_HOST = redis.credentials["host"]
         self.REDIS_PORT = redis.credentials["port"]
         self.REDIS_PASSWORD = redis.credentials["password"]
@@ -72,6 +73,8 @@ class LocalConfig(Config):
         self.REDIS_HOST = "localhost"
         self.REDIS_PORT = "3456"
         self.REDIS_PASSWORD = "CHANGEME"
+
+        self.ACME_DIRECTORY = "https://localhost:14000/dir"
 
 
 class UpgradeSchemaConfig(Config):
