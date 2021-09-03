@@ -10,6 +10,7 @@ cf-manifest-vars: &cf-manifest-vars
     CDN_DB_NAME: ((cdn_db_name))
     DOMAIN_DB_NAME: ((domain_db_name))
     REDIS_NAME: ((redis_name))
+    LETS_ENCRYPT_REGISTRATION_EMAIL: ((lets_encrypt_registration_email))
 
 create-redis-service-params: &create-redis-service-params
   APP_NAME: ((name))

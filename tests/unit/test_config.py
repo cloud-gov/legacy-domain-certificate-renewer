@@ -86,6 +86,7 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("VCAP_APPLICATION", vcap_application)
     monkeypatch.setenv("VCAP_SERVICES", vcap_services)
     monkeypatch.setenv("ENV", "local")
+    monkeypatch.setenv("LETS_ENCRYPT_REGISTRATION_EMAIL", "me@example.com")
     monkeypatch.setenv("AWS_GOVCLOUD_REGION", "us-gov-west-1")
     monkeypatch.setenv("AWS_GOVCLOUD_ACCESS_KEY_ID", "ASIANOTAREALKEYGOV")
     monkeypatch.setenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY_GOV")
@@ -111,6 +112,7 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.REDIS_HOST == "my-redis-hostname"
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"
+    assert config.LETS_ENCRYPT_REGISTRATION_EMAIL == "me@example.com"
 
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions
