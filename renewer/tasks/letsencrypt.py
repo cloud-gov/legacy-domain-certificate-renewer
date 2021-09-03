@@ -47,7 +47,7 @@ def create_user(session, route, operation, acme_user):
     directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
     client_acme = AcmeClient(directory, net=net)
 
-    acme_user.email = "cloud-gov-operations@gsa.gov"
+    acme_user.email = config.LETS_ENCRYPT_REGISTRATION_EMAIL
     registration = client_acme.new_account(
         messages.NewRegistration.from_data(
             email=acme_user.email, terms_of_service_agreed=True
