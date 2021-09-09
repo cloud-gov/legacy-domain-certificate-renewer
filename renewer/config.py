@@ -54,7 +54,9 @@ class AppConfig(Config):
         self.REDIS_PORT = redis.credentials["port"]
         self.REDIS_PASSWORD = redis.credentials["password"]
         self.REDIS_SSL = True
-        self.LETS_ENCRYPT_REGISTRATION_EMAIL = self.env_parser("LETS_ENCRYPT_REGISTRATION_EMAIL")
+        self.LETS_ENCRYPT_REGISTRATION_EMAIL = self.env_parser(
+            "LETS_ENCRYPT_REGISTRATION_EMAIL"
+        )
 
 
 class LocalConfig(Config):
@@ -72,7 +74,7 @@ class LocalConfig(Config):
 
         self.REDIS_SSL = False
         self.REDIS_HOST = "localhost"
-        self.REDIS_PORT = "3456"
+        self.REDIS_PORT = "6379"
         self.REDIS_PASSWORD = "CHANGEME"
 
         self.ACME_DIRECTORY = "https://localhost:14000/dir"

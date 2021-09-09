@@ -39,6 +39,10 @@ COPY --from=letsencrypt/pebble /test/ /test/
 RUN cp /test/certs/pebble.minica.pem /usr/local/share/ca-certificates/pebble.crt \
  && update-ca-certificates
 
+# install redis
+COPY --from=redis:5.0 /usr/local/bin/redis-server /usr/bin/redis-server
+COPY --from=redis:5.0 /usr/local/bin/redis-cli /usr/bin/redis-cli
+
 # Install Postgresql
 ENV PG_MAJOR=11
 RUN curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \

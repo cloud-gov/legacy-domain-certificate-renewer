@@ -5,6 +5,7 @@ from tests.lib.cdn_fixtures import cdn_route
 from tests.lib.database import clean_db
 from tests.lib.fake_alb import alb
 from tests.lib.fake_iam import iam_govcloud
+from tests.lib.tasks import tasks, immediate_huey
 
 
 def pytest_configure(config):
