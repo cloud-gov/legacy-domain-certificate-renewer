@@ -12,9 +12,10 @@ def backport_all_manual_certs():
             backport_cert(instance.instance_id)
 
 
-@huey.nonretriable_task
-def backport_cert(session, instance_id):
-    instance = session.query(DomainRoute).get(instance_id)
-    cert = instance.backport_manual_certs()
-    session.add(cert)
-    session.commit()
+@huey.retriable_task
+def backport_cert(instance_id):
+    with session_handler() as session:
+        instance = session.query(DomainRoute).get(instance_id)
+        cert = instance.backport_manual_certs()
+        session.add(cert)
+        session.commit()

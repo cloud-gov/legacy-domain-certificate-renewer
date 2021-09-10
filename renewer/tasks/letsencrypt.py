@@ -5,24 +5,35 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from renewer.cdn_models import CdnOperation, CdnAcmeUserV2
-from renewer.domain_models import DomainOperation, DomainAcmeUserV2
+from renewer.cdn_models import CdnOperation, CdnAcmeUserV2, CdnCertificate
+from renewer.domain_models import (
+    DomainOperation,
+    DomainAcmeUserV2,
+    DomainCertificate,
+    DomainRoute,
+)
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
+from renewer import huey
+from renewer.db import session_handler
 
 
-def alb_create_user(session, operation_id):
-    operation = session.query(DomainOperation).get(operation_id)
-    route = operation.route
-    acme_user = DomainAcmeUserV2()
-    return create_user(session, route, operation, acme_user)
+@huey.retriable_task
+def alb_create_user(operation_id):
+    with session_handler() as session:
+        operation = session.query(DomainOperation).get(operation_id)
+        route = operation.route
+        acme_user = DomainAcmeUserV2()
+        return create_user(session, route, operation, acme_user)
 
 
-def cdn_create_user(session, operation_id):
-    operation = session.query(CdnOperation).get(operation_id)
-    route = operation.route
-    acme_user = CdnAcmeUserV2()
-    return create_user(session, route, operation, acme_user)
+@huey.retriable_task
+def cdn_create_user(operation_id):
+    with session_handler() as session:
+        operation = session.query(CdnOperation).get(operation_id)
+        route = operation.route
+        acme_user = CdnAcmeUserV2()
+        return create_user(session, route, operation, acme_user)
 
 
 def create_user(session, route, operation, acme_user):
@@ -58,4 +69,62 @@ def create_user(session, route, operation, acme_user):
     session.add(operation)
     session.add(route)
     session.add(acme_user)
+    session.commit()
+
+
+@huey.retriable_task
+def alb_create_private_key_and_csr(operation_id: int):
+    with session_handler() as session:
+        operation = session.query(DomainOperation).get(operation_id)
+        if operation.certificate is None:
+            # note: we're not linking the cert to the route yet. This is intentional
+            # we're going to link them together once we actually have a certificate
+            # this is to prevent messing with the migrator, until/unless we update it
+            # to understand renewals
+            operation.certificate = DomainCertificate()
+        route = operation.route
+        session.add(operation)
+        session.commit()
+        create_private_key_and_csr(session, operation)
+
+
+@huey.retriable_task
+def cdn_create_private_key_and_csr(operation_id: int):
+    with session_handler() as session:
+        operation = session.query(CdnOperation).get(operation_id)
+        if operation.certificate is None:
+            # note: we're not linking the cert to the route yet. This is intentional
+            # we're going to link them together once we actually have a certificate
+            # this is to prevent messing with the migrator, until/unless we update it
+            # to understand renewals
+            operation.certificate = CdnCertificate()
+        route = operation.route
+        session.add(operation)
+        session.commit()
+        create_private_key_and_csr(session, operation)
+
+
+def create_private_key_and_csr(session, operation):
+    certificate = operation.certificate
+    route = operation.route
+
+    # Create private key.
+    private_key = OpenSSL.crypto.PKey()
+    private_key.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
+
+    # Get the PEM
+    private_key_pem_in_binary = OpenSSL.crypto.dump_privatekey(
+        OpenSSL.crypto.FILETYPE_PEM, private_key
+    )
+
+    # Get the CSR for the domains
+    csr_pem_in_binary = crypto_util.make_csr(
+        private_key_pem_in_binary, route.domain_external_list()
+    )
+
+    # Store them as text for later
+    certificate.private_key_pem = private_key_pem_in_binary.decode("utf-8")
+    certificate.csr_pem = csr_pem_in_binary.decode("utf-8")
+
+    session.add(certificate)
     session.commit()

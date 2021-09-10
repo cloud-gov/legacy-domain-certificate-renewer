@@ -57,6 +57,7 @@ class AppConfig(Config):
         self.LETS_ENCRYPT_REGISTRATION_EMAIL = self.env_parser(
             "LETS_ENCRYPT_REGISTRATION_EMAIL"
         )
+        self.DATABASE_ENCRYPTION_KEY = self.env_parser("DATABASE_ENCRYPTION_KEY")
 
 
 class LocalConfig(Config):
@@ -79,6 +80,7 @@ class LocalConfig(Config):
 
         self.ACME_DIRECTORY = "https://localhost:14000/dir"
         self.LETS_ENCRYPT_REGISTRATION_EMAIL = "ops@example.com"
+        self.DATABASE_ENCRYPTION_KEY = "feedabee"
 
 
 class UpgradeSchemaConfig(Config):
@@ -93,3 +95,4 @@ class UpgradeSchemaConfig(Config):
         self.AWS_GOVCLOUD_REGION = "none"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = None
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = None
+        self.DATABASE_ENCRYPTION_KEY = self.env_parser("DATABASE_ENCRYPTION_KEY")
