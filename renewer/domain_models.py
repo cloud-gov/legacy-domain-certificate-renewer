@@ -127,7 +127,7 @@ class DomainCertificate(DomainBase):
     arn = sa.Column(sa.Text)
     name = sa.Column(sa.Text)
     expires = sa.Column(postgresql.TIMESTAMP, index=True)
-    private_key_pem = sa.Column(
+    private_key_pem: str = sa.Column(
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
     )
     csr_pem = sa.Column(sa.Text)
@@ -172,8 +172,8 @@ class DomainOperation(DomainBase):
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
     route_guid: str = sa.Column(sa.ForeignKey(DomainRoute.instance_id), nullable=False)
-    certificate_id = sa.Column(sa.ForeignKey(DomainCertificate.id))
-    certificate = orm.relationship(
+    certificate_id: int = sa.Column(sa.ForeignKey(DomainCertificate.id))
+    certificate: DomainCertificate = orm.relationship(
         DomainCertificate,
         foreign_keys=[certificate_id],
         primaryjoin="DomainOperation.certificate_id == DomainCertificate.id",
@@ -199,7 +199,7 @@ class DomainAcmeUserV2(DomainBase):
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     email = sa.Column(sa.String, nullable=False)
     uri = sa.Column(sa.String, nullable=False)
-    private_key_pem = sa.Column(
+    private_key_pem: str = sa.Column(
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
     )
     registration_json = sa.Column(sa.Text)
