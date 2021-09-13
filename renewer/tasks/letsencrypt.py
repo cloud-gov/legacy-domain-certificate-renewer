@@ -1,7 +1,6 @@
 from typing import Type, Union
 
 import josepy
-import OpenSSL
 from OpenSSL import crypto
 from acme import challenges, client, crypto_util, messages, errors
 from cryptography.hazmat.backends import default_backend
