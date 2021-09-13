@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+cd /app || (echo "Cannot find /app directory"; exit 2)
+set -xeuo pipefail
+
+
+python -m mypy renewer "$@"
