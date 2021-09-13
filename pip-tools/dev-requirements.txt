@@ -16,11 +16,15 @@ black==21.7b0
     # via -r pip-tools/dev-requirements.in
 boto3==1.18.25
     # via -r pip-tools/../requirements.txt
+boto3-stubs[cloudfront,elbv2,iam]==1.18.40
+    # via -r pip-tools/dev-requirements.in
 botocore==1.21.25
     # via
     #   -r pip-tools/../requirements.txt
     #   boto3
     #   s3transfer
+botocore-stubs==1.21.40
+    # via boto3-stubs
 certifi==2021.5.30
     # via
     #   -r pip-tools/../requirements.txt
@@ -92,8 +96,20 @@ marshmallow==3.13.0
     # via
     #   -r pip-tools/../requirements.txt
     #   environs
+mypy==0.910
+    # via
+    #   -r pip-tools/dev-requirements.in
+    #   sqlalchemy
+mypy-boto3-cloudfront==1.18.40
+    # via boto3-stubs
+mypy-boto3-elbv2==1.18.40
+    # via boto3-stubs
+mypy-boto3-iam==1.18.40
+    # via boto3-stubs
 mypy-extensions==0.4.3
-    # via black
+    # via
+    #   black
+    #   mypy
 orderedmultidict==1.0.1
     # via
     #   -r pip-tools/../requirements.txt
@@ -176,19 +192,38 @@ six==1.16.0
     #   pyopenssl
     #   python-dateutil
     #   sqlalchemy-utils
-sqlalchemy==1.4.23
+sqlalchemy[mypy]==1.4.23
     # via
     #   -r pip-tools/../requirements.txt
+    #   -r pip-tools/dev-requirements.in
     #   alembic
     #   sqlalchemy-utils
 sqlalchemy-utils==0.37.8
     # via -r pip-tools/../requirements.txt
+sqlalchemy2-stubs==0.0.2a15
+    # via sqlalchemy
 toml==0.10.2
-    # via pytest
+    # via
+    #   mypy
+    #   pytest
 tomli==1.2.1
     # via
     #   black
     #   pep517
+types-cryptography==3.3.5
+    # via types-pyopenssl
+types-enum34==1.1.0
+    # via types-cryptography
+types-ipaddress==1.0.0
+    # via types-cryptography
+types-pyopenssl==20.0.6
+    # via -r pip-tools/dev-requirements.in
+types-redis==3.5.8
+    # via -r pip-tools/dev-requirements.in
+typing-extensions==3.10.0.2
+    # via
+    #   mypy
+    #   sqlalchemy2-stubs
 urllib3==1.26.6
     # via
     #   -r pip-tools/../requirements.txt

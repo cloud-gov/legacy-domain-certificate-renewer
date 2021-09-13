@@ -71,6 +71,16 @@ jobs:
       cache: true
 
   - task: test
+    # Run mypy using the image pushed above.
+    image: dev-docker-image
+    config:
+      platform: linux
+      params:
+        TMPDIR: /tmp
+      run:
+        path: /app/docker/mypy
+
+  - task: test
     # Run the tests using the image pushed above.
     image: dev-docker-image
     config:
