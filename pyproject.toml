@@ -17,3 +17,7 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.mypy]
+plugins = ['sqlalchemy.ext.mypy.plugin']
+ignore_missing_imports = true
