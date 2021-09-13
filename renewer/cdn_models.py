@@ -118,7 +118,7 @@ class CdnCertificate(CdnBase):
     # certificate is the actual body of the certificate chain
     certificate = sa.Column(postgresql.BYTEA)
     expires = sa.Column(postgresql.TIMESTAMP, index=True)
-    private_key_pem = sa.Column(
+    private_key_pem: str = sa.Column(
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
     )
     csr_pem = sa.Column(sa.Text)
@@ -129,8 +129,8 @@ class CdnOperation(CdnBase):
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
     route_id: int = sa.Column(sa.ForeignKey(CdnRoute.id), nullable=False)
-    certificate_id = sa.Column(sa.ForeignKey(CdnCertificate.id))
-    certificate = orm.relationship(
+    certificate_id: int = sa.Column(sa.ForeignKey(CdnCertificate.id))
+    certificate: CdnCertificate = orm.relationship(
         CdnCertificate,
         foreign_keys=[certificate_id],
         primaryjoin="CdnOperation.certificate_id == CdnCertificate.id",
@@ -155,7 +155,7 @@ class CdnAcmeUserV2(CdnBase):
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     email = sa.Column(sa.String, nullable=False)
     uri = sa.Column(sa.String, nullable=False)
-    private_key_pem = sa.Column(
+    private_key_pem: str = sa.Column(
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
     )
     registration_json = sa.Column(sa.Text)
