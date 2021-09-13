@@ -28,6 +28,10 @@ metadata = sa.MetaData(naming_convention=convention)
 DomainBase = declarative.declarative_base(metadata=metadata)
 
 
+def db_encryption_key():
+    return config.DATABASE_ENCRYPTION_KEY
+
+
 def find_active_instances(session):
     domain_query = session.query(DomainRoute).filter(DomainRoute.state == "provisioned")
     domain_routes = domain_query.all()
@@ -123,6 +127,10 @@ class DomainCertificate(DomainBase):
     arn = sa.Column(sa.Text)
     name = sa.Column(sa.Text)
     expires = sa.Column(postgresql.TIMESTAMP, index=True)
+    private_key_pem = sa.Column(
+        StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
+    )
+    csr_pem = sa.Column(sa.Text)
 
     @property
     def needs_renewal(self):
@@ -164,6 +172,13 @@ class DomainOperation(DomainBase):
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
     route_guid: str = sa.Column(sa.ForeignKey(DomainRoute.instance_id), nullable=False)
+    certificate_id = sa.Column(sa.ForeignKey(DomainCertificate.id))
+    certificate = orm.relationship(
+        DomainCertificate,
+        foreign_keys=[certificate_id],
+        primaryjoin="DomainOperation.certificate_id == DomainCertificate.id",
+    )
+
     state = sa.Column(
         sa.Text,
         default=OperationState.IN_PROGRESS.value,
@@ -184,7 +199,9 @@ class DomainAcmeUserV2(DomainBase):
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     email = sa.Column(sa.String, nullable=False)
     uri = sa.Column(sa.String, nullable=False)
-    private_key_pem = sa.Column(sa.Text)
+    private_key_pem = sa.Column(
+        StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
+    )
     registration_json = sa.Column(sa.Text)
 
     routes: List[DomainRoute] = orm.relation(

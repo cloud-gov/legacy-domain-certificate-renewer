@@ -11,12 +11,13 @@ from renewer.domain_models import (
     DomainCertificate,
     find_active_instances,
     DomainOperation,
+    DomainAcmeUserV2,
 )
 from renewer import extensions
 
 
 def test_can_get_session():
-    with db.session_handler() as session:
+    with db.SessionHandler() as session:
         result = session.execute(
             "SELECT count(1) FROM certificates", bind=db.domain_engine
         )
@@ -28,7 +29,7 @@ def test_can_create_route():
 
     # note that we shouldn't _actually_ be creating routes in this project
     # but this is a test we can do with an empty database
-    with db.session_handler() as session:
+    with db.SessionHandler() as session:
         route = DomainRoute()
         route.instance_id = "12345"
         route.state = "deprovisioned"
@@ -220,3 +221,33 @@ def test_renew_creates_operation(clean_db):
     assert operation is not None
     assert operation.route == route
     assert operation.action == "renew"
+
+
+def test_stores_acmeuser_private_key_pem_encrypted(clean_db):
+
+    acme_user = DomainAcmeUserV2()
+    acme_user.private_key_pem = "UNENCRYPTED"
+    acme_user.email = "email"
+    acme_user.uri = "uri"
+    clean_db.add(acme_user)
+    clean_db.commit()
+    row = clean_db.execute(
+        f"select private_key_pem from acme_user_v2 where id='{acme_user.id}'",
+        bind_arguments={"bind": db.domain_engine},
+    ).first()
+    assert row
+    assert row[0] != "UNENCRYPTED"
+
+
+def test_stores_service_instance_private_key_pem_encrypted(clean_db):
+
+    cert = DomainCertificate()
+    cert.private_key_pem = "UNENCRYPTED"
+    clean_db.add(cert)
+    clean_db.commit()
+    row = clean_db.execute(
+        f"select private_key_pem from certificates where id='{cert.id}'",
+        bind_arguments={"bind": db.domain_engine},
+    ).first()
+    assert row
+    assert row[0] != "UNENCRYPTED"
