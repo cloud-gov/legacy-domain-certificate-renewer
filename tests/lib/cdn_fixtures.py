@@ -8,7 +8,7 @@ def cdn_route(clean_db):
     route = CdnRoute()
     route.instance_id = "fixture-route"
     route.state = "provisioned"
-    route.domain_external = "example.com"
+    route.domain_external = "example.com,www.example.com"
     clean_db.add(route)
     clean_db.commit()
     return route

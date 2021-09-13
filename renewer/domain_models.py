@@ -133,6 +133,10 @@ class DomainCertificate(DomainBase):
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
     )
     csr_pem = sa.Column(sa.Text)
+    challenges: List["DomainChallenge"] = orm.relationship(
+        "DomainChallenge", backref="certificate", lazy="dynamic"
+    )
+    order_json = sa.Column(sa.Text)
 
     @property
     def needs_renewal(self):
@@ -209,3 +213,17 @@ class DomainAcmeUserV2(DomainBase):
     routes: List[DomainRoute] = orm.relation(
         "DomainRoute", backref="acme_user", lazy="dynamic"
     )
+
+
+class DomainChallenge(DomainBase):
+    __tablename__ = "challenges"
+    id = sa.Column(sa.Integer, primary_key=True)
+    certificate_id = sa.Column(
+        sa.Integer, sa.ForeignKey(DomainCertificate.id), nullable=False
+    )
+    domain = sa.Column(sa.String, nullable=False)
+    validation_domain = sa.Column(sa.String, nullable=False)
+    validation_contents = sa.Column(sa.Text, nullable=False)
+    body_json = sa.Column(sa.Text)
+    answered = sa.Column(sa.Boolean, default=False)
+    certificate: DomainCertificate

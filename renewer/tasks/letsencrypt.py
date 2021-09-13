@@ -1,3 +1,4 @@
+import json
 from typing import Type, Union
 
 import josepy
@@ -7,12 +8,19 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from renewer.cdn_models import CdnOperation, CdnAcmeUserV2, CdnCertificate, CdnRoute
+from renewer.cdn_models import (
+    CdnOperation,
+    CdnAcmeUserV2,
+    CdnCertificate,
+    CdnRoute,
+    CdnChallenge,
+)
 from renewer.domain_models import (
     DomainOperation,
     DomainAcmeUserV2,
     DomainCertificate,
     DomainRoute,
+    DomainChallenge,
 )
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
@@ -23,6 +31,38 @@ TOperation = Type[Union[DomainOperation, CdnOperation]]
 TUser = Type[Union[DomainAcmeUserV2, CdnAcmeUserV2]]
 TRoute = Type[Union[DomainRoute, CdnRoute]]
 TCertificate = Type[Union[DomainCertificate, CdnCertificate]]
+TChallenge = Type[Union[DomainChallenge, CdnChallenge]]
+
+
+class DNSChallengeNotFound(RuntimeError):
+    def __init__(self, domain, obj):
+        super().__init__(f"Cannot find DNS challenges for {domain} in {obj}")
+
+
+class ChallengeNotFound(RuntimeError):
+    def __init__(self, domain, obj):
+        super().__init__(f"Cannot find any challenges for {domain} in {obj}")
+
+
+def dns_challenge(order, domain):
+    """Extract authorization resource from within order resource."""
+
+    # authorization.body.challenges is a set of ChallengeBody
+    # objects.
+    challenges_for_domain = [
+        authorization.body.challenges
+        for authorization in order.authorizations
+        if authorization.body.identifier.value == domain
+    ][0]
+
+    if not challenges_for_domain:
+        raise ChallengeNotFound(domain, order.authorizations)
+
+    for challenge in challenges_for_domain:
+        if isinstance(challenge.chall, challenges.DNS01):
+            return challenge
+
+    raise DNSChallengeNotFound(domain, challenges_for_domain)
 
 
 @huey.retriable_task
@@ -113,4 +153,61 @@ def create_private_key_and_csr(session, operation_id: int, instance_type: RouteT
     certificate.csr_pem = csr_pem_in_binary.decode("utf-8")
 
     session.add(certificate)
+    session.commit()
+
+
+@huey.retriable_task
+def initiate_challenges(session, operation_id: int, instance_type: RouteType):
+    Operation: TOperation
+    Challenge: TChallenge
+
+    if instance_type is RouteType.ALB:
+        Operation = DomainOperation
+        Challenge = DomainChallenge
+    elif instance_type is RouteType.CDN:
+        Operation = CdnOperation
+        Challenge = CdnChallenge
+
+    operation = session.query(Operation).get(operation_id)
+    certificate = operation.certificate
+    route = operation.route
+    acme_user = route.acme_user
+
+    if certificate.order_json is not None:
+        return
+
+    account_key = serialization.load_pem_private_key(
+        acme_user.private_key_pem.encode(), password=None, backend=default_backend()
+    )
+    wrapped_account_key = josepy.JWKRSA(key=account_key)
+
+    registration = json.loads(acme_user.registration_json)
+    net = client.ClientNetwork(
+        wrapped_account_key,
+        user_agent="cloud.gov legacy domain renewer",
+        account=registration,
+    )
+    directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
+    client_acme = AcmeClient(directory, net=net)
+
+    order = client_acme.new_order(certificate.csr_pem.encode())
+    order_json = json.dumps(order.to_json())
+    certificate.order_json = json.dumps(order.to_json())
+
+    for domain in route.domain_external_list():
+        challenge_body = dns_challenge(order, domain)
+        (
+            challenge_response,
+            challenge_validation_contents,
+        ) = challenge_body.response_and_validation(wrapped_account_key)
+
+        challenge = Challenge()
+        challenge.body_json = challenge_body.json_dumps()
+
+        challenge.domain = domain
+        challenge.certificate = certificate
+        challenge.validation_domain = challenge_body.validation_domain_name(domain)
+        challenge.validation_contents = challenge_validation_contents
+        session.add(challenge)
+
     session.commit()
