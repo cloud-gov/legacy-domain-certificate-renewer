@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from typing import List
 
 import sqlalchemy as sa
 from sqlalchemy.ext import declarative
@@ -50,18 +51,20 @@ class DomainRoute(DomainBase):
     challenge_json = sa.Column(postgresql.BYTEA)
     user_data_id = sa.Column(sa.Integer)
     alb_proxy_arn = sa.Column(sa.Text)
-    alb_proxy = orm.relationship(
+    alb_proxy: DomainAlbProxy = orm.relationship(
         DomainAlbProxy,
         foreign_keys=[alb_proxy_arn],
         primaryjoin="DomainRoute.alb_proxy_arn == DomainAlbProxy.alb_arn",
     )
-    certificates = orm.relationship(
+    certificates: List["DomainCertificate"] = orm.relationship(
         "DomainCertificate",
         order_by="desc(DomainCertificate.expires)",
         primaryjoin="(foreign(DomainCertificate.route_guid)) == DomainRoute.instance_id",
         backref="route",
     )
-    operations = orm.relationship("DomainOperation", backref="route", lazy="dynamic")
+    operations: List["DomainOperation"] = orm.relationship(
+        "DomainOperation", backref="route", lazy="dynamic"
+    )
     acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
 
     def domain_external_list(self):
@@ -111,7 +114,7 @@ class DomainCertificate(DomainBase):
     created_at = sa.Column(postgresql.TIMESTAMP)
     updated_at = sa.Column(postgresql.TIMESTAMP)
     deleted_at = sa.Column(postgresql.TIMESTAMP, index=True)
-    route_guid = sa.Column(sa.Integer)
+    route_guid = sa.Column(sa.Text)
     domain = sa.Column(sa.Text)
     # cert_url is the Let's Encrypt URL for the certificate
     cert_url = sa.Column(sa.Text)
@@ -160,7 +163,7 @@ class DomainOperation(DomainBase):
     __tablename__ = "operations"
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
-    route_guid = sa.Column(sa.ForeignKey(DomainRoute.instance_id), nullable=False)
+    route_guid: str = sa.Column(sa.ForeignKey(DomainRoute.instance_id), nullable=False)
     state = sa.Column(
         sa.Text,
         default=OperationState.IN_PROGRESS.value,
@@ -184,4 +187,6 @@ class DomainAcmeUserV2(DomainBase):
     private_key_pem = sa.Column(sa.Text)
     registration_json = sa.Column(sa.Text)
 
-    routes = orm.relation("DomainRoute", backref="acme_user", lazy="dynamic")
+    routes: List[DomainRoute] = orm.relation(
+        "DomainRoute", backref="acme_user", lazy="dynamic"
+    )

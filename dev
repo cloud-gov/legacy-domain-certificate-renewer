@@ -46,6 +46,10 @@ main() {
       build_image
       new-migration "$@"
       ;;
+    mypy)
+      build_image
+      run-mypy "$@"
+      ;;
     *)
       usage "Unknown command: $command"
       ;;
@@ -114,6 +118,10 @@ update-requirements() {
 new-migration() {
   [[ "$#" -eq 1 ]] || usage "Missing migration description (e.g. 'added foo table')"
   run "./docker/start-servers.sh && alembic -c migrations/alembic.ini upgrade head && alembic -c migrations/alembic.ini revision --autogenerate -m \"$1\""
+}
+
+run-mypy() {
+  run_docker docker/mypy "$@"
 }
 
 usage() {

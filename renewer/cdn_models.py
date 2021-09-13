@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from typing import List
 
 import sqlalchemy as sa
 from sqlalchemy.ext import declarative
@@ -70,7 +71,7 @@ class CdnRoute(CdnBase):
     insecure_origin = sa.Column(sa.Boolean)
     challenge_json = sa.Column(postgresql.BYTEA)
     user_data_id = sa.Column(sa.Integer)
-    certificates = orm.relationship(
+    certificates: List["CdnCertificate"] = orm.relationship(
         "CdnCertificate",
         order_by="desc(CdnCertificate.expires)",
         primaryjoin="(foreign(CdnCertificate.route_id)) == CdnRoute.id",
@@ -81,7 +82,9 @@ class CdnRoute(CdnBase):
     # provisioning
     # provisioned
     state = sa.Column(sa.Text, index=True, nullable=False)
-    operations = orm.relationship("CdnOperation", backref="route", lazy="dynamic")
+    operations: List["CdnOperation"] = orm.relationship(
+        "CdnOperation", backref="route", lazy="dynamic"
+    )
     acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
 
     def domain_external_list(self):
@@ -119,7 +122,7 @@ class CdnOperation(CdnBase):
     __tablename__ = "operations"
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
-    route_id = sa.Column(sa.ForeignKey(CdnRoute.id), nullable=False)
+    route_id: int = sa.Column(sa.ForeignKey(CdnRoute.id), nullable=False)
     state = sa.Column(
         sa.Text,
         default=OperationState.IN_PROGRESS.value,
@@ -143,4 +146,6 @@ class CdnAcmeUserV2(CdnBase):
     private_key_pem = sa.Column(sa.Text)
     registration_json = sa.Column(sa.Text)
 
-    routes = orm.relation("CdnRoute", backref="acme_user", lazy="dynamic")
+    routes: List[CdnRoute] = orm.relation(
+        "CdnRoute", backref="acme_user", lazy="dynamic"
+    )
