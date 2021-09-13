@@ -59,7 +59,7 @@ def dns_challenge(order, domain):
         raise ChallengeNotFound(domain, order.authorizations)
 
     for challenge in challenges_for_domain:
-        if isinstance(challenge.chall, challenges.DNS01):
+        if isinstance(challenge.chall, challenges.HTTP01):
             return challenge
 
     raise DNSChallengeNotFound(domain, challenges_for_domain)
