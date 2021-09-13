@@ -1,11 +1,14 @@
+from typing import Type, Union
+
 import josepy
 import OpenSSL
+from OpenSSL import crypto
 from acme import challenges, client, crypto_util, messages, errors
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from renewer.cdn_models import CdnOperation, CdnAcmeUserV2, CdnCertificate
+from renewer.cdn_models import CdnOperation, CdnAcmeUserV2, CdnCertificate, CdnRoute
 from renewer.domain_models import (
     DomainOperation,
     DomainAcmeUserV2,
@@ -17,9 +20,16 @@ from renewer.acme_client import AcmeClient
 from renewer import huey
 from renewer.route_type import RouteType
 
+TOperation = Type[Union[DomainOperation, CdnOperation]]
+TUser = Type[Union[DomainAcmeUserV2, CdnAcmeUserV2]]
+TRoute = Type[Union[DomainRoute, CdnRoute]]
+TCertificate = Type[Union[DomainCertificate, CdnCertificate]]
+
 
 @huey.retriable_task
 def create_user(session, operation_id: int, route_type: RouteType):
+    Operation: TOperation
+    AcmeUserV2: TUser
     if route_type is RouteType.ALB:
         Operation = DomainOperation
         AcmeUserV2 = DomainAcmeUserV2
@@ -67,6 +77,8 @@ def create_user(session, operation_id: int, route_type: RouteType):
 
 @huey.retriable_task
 def create_private_key_and_csr(session, operation_id: int, instance_type: RouteType):
+    Operation: TOperation
+    Certificate: TCertificate
     if instance_type is RouteType.ALB:
         Operation = DomainOperation
         Certificate = DomainCertificate
@@ -86,13 +98,11 @@ def create_private_key_and_csr(session, operation_id: int, instance_type: RouteT
     route = operation.route
 
     # Create private key.
-    private_key = OpenSSL.crypto.PKey()
-    private_key.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
+    private_key = crypto.PKey()
+    private_key.generate_key(crypto.TYPE_RSA, 2048)
 
     # Get the PEM
-    private_key_pem_in_binary = OpenSSL.crypto.dump_privatekey(
-        OpenSSL.crypto.FILETYPE_PEM, private_key
-    )
+    private_key_pem_in_binary = crypto.dump_privatekey(crypto.FILETYPE_PEM, private_key)
 
     # Get the CSR for the domains
     csr_pem_in_binary = crypto_util.make_csr(

@@ -216,7 +216,7 @@ types-enum34==1.1.0
     # via types-cryptography
 types-ipaddress==1.0.0
     # via types-cryptography
-types-pyopenssl==20.0.6
+types-pyopenssl==20.0.1
     # via -r pip-tools/dev-requirements.in
 types-redis==3.5.8
     # via -r pip-tools/dev-requirements.in
