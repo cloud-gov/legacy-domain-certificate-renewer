@@ -14,6 +14,7 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
 from renewer.action import Action
 from renewer.extensions import config
 from renewer.state import OperationState
+from renewer.route_type import RouteType
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -86,6 +87,7 @@ class CdnRoute(CdnBase):
         "CdnOperation", backref="route", lazy="dynamic"
     )
     acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
+    route_type = RouteType.CDN
 
     def domain_external_list(self):
         return self.domain_external.split(",")

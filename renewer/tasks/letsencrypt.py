@@ -15,25 +15,21 @@ from renewer.domain_models import (
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
 from renewer import huey
+from renewer.route_type import RouteType
 
 
 @huey.retriable_task
-def alb_create_user(session, operation_id):
-    operation = session.query(DomainOperation).get(operation_id)
+def create_user(session, operation_id: int, route_type: RouteType):
+    if route_type is RouteType.ALB:
+        Operation = DomainOperation
+        AcmeUserV2 = DomainAcmeUserV2
+    elif route_type is RouteType.CDN:
+        Operation = CdnOperation
+        AcmeUserV2 = CdnAcmeUserV2
+
+    operation = session.query(Operation).get(operation_id)
     route = operation.route
-    acme_user = DomainAcmeUserV2()
-    return create_user(session, route, operation, acme_user)
-
-
-@huey.retriable_task
-def cdn_create_user(session, operation_id):
-    operation = session.query(CdnOperation).get(operation_id)
-    route = operation.route
-    acme_user = CdnAcmeUserV2()
-    return create_user(session, route, operation, acme_user)
-
-
-def create_user(session, route, operation, acme_user):
+    acme_user = AcmeUserV2()
     if route.acme_user_id is not None:
         return
 
@@ -70,36 +66,22 @@ def create_user(session, route, operation, acme_user):
 
 
 @huey.retriable_task
-def alb_create_private_key_and_csr(session, operation_id: int):
-    operation = session.query(DomainOperation).get(operation_id)
+def create_private_key_and_csr(session, operation_id: int, instance_type: RouteType):
+    if instance_type is RouteType.ALB:
+        Operation = DomainOperation
+        Certificate = DomainCertificate
+    elif instance_type is RouteType.CDN:
+        Operation = CdnOperation
+        Certificate = CdnCertificate
+
+    operation = session.query(Operation).get(operation_id)
     if operation.certificate is None:
         # note: we're not linking the cert to the route yet. This is intentional
         # we're going to link them together once we actually have a certificate
         # this is to prevent messing with the migrator, until/unless we update it
         # to understand renewals
-        operation.certificate = DomainCertificate()
-    route = operation.route
-    session.add(operation)
-    session.commit()
-    create_private_key_and_csr(session, operation)
+        operation.certificate = Certificate()
 
-
-@huey.retriable_task
-def cdn_create_private_key_and_csr(session, operation_id: int):
-    operation = session.query(CdnOperation).get(operation_id)
-    if operation.certificate is None:
-        # note: we're not linking the cert to the route yet. This is intentional
-        # we're going to link them together once we actually have a certificate
-        # this is to prevent messing with the migrator, until/unless we update it
-        # to understand renewals
-        operation.certificate = CdnCertificate()
-    route = operation.route
-    session.add(operation)
-    session.commit()
-    create_private_key_and_csr(session, operation)
-
-
-def create_private_key_and_csr(session, operation):
     certificate = operation.certificate
     route = operation.route
 

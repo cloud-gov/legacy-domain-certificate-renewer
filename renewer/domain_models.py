@@ -15,6 +15,7 @@ from renewer.state import OperationState
 from renewer.action import Action
 from renewer.aws import alb, iam_govcloud
 from renewer.extensions import config
+from renewer.route_type import RouteType
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -70,6 +71,7 @@ class DomainRoute(DomainBase):
         "DomainOperation", backref="route", lazy="dynamic"
     )
     acme_user_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
+    route_type = RouteType.ALB
 
     def domain_external_list(self):
         """to match CdnRoute"""

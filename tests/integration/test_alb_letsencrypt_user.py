@@ -17,7 +17,7 @@ def test_create_acme_user_when_none_exists(
     clean_db.add(alb_route)
     clean_db.add(operation)
     clean_db.commit()
-    letsencrypt.alb_create_user(operation.id)
+    letsencrypt.create_user(operation.id, alb_route.route_type)
     clean_db.expunge_all()
 
     alb_route = clean_db.query(DomainRoute).get(instance_id)
@@ -32,9 +32,9 @@ def test_create_private_key(clean_db, alb_route: DomainRoute, immediate_huey):
     clean_db.add(operation)
     clean_db.commit()
     operation_id = operation.id
-    letsencrypt.alb_create_user(operation.id)
+    letsencrypt.create_user(operation.id, alb_route.route_type)
 
-    letsencrypt.alb_create_private_key_and_csr(operation.id)
+    letsencrypt.create_private_key_and_csr(operation.id, alb_route.route_type)
     clean_db.expunge_all()
     operation = clean_db.query(DomainOperation).get(operation_id)
     certificate = operation.certificate
