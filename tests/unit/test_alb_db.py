@@ -17,7 +17,7 @@ from renewer import extensions
 
 
 def test_can_get_session():
-    with db.session_handler() as session:
+    with db.SessionHandler() as session:
         result = session.execute(
             "SELECT count(1) FROM certificates", bind=db.domain_engine
         )
@@ -29,7 +29,7 @@ def test_can_create_route():
 
     # note that we shouldn't _actually_ be creating routes in this project
     # but this is a test we can do with an empty database
-    with db.session_handler() as session:
+    with db.SessionHandler() as session:
         route = DomainRoute()
         route.instance_id = "12345"
         route.state = "deprovisioned"

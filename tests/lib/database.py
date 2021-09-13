@@ -1,10 +1,10 @@
 import pytest
-from renewer.db import session_handler, cdn_engine, domain_engine
+from renewer.db import SessionHandler, cdn_engine, domain_engine
 
 
 @pytest.fixture(scope="function")
 def clean_db():
-    with session_handler() as session:
+    with SessionHandler() as session:
         session.execute("TRUNCATE TABLE user_data", bind=cdn_engine)
         session.execute("TRUNCATE TABLE routes CASCADE", bind=cdn_engine)
         session.execute("TRUNCATE TABLE operations CASCADE", bind=cdn_engine)
