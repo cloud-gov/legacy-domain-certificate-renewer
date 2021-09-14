@@ -1,8 +1,8 @@
 """add challenge and order tracking
 
-Revision ID: dea7e9aea52b
+Revision ID: 46f261240bcb
 Revises: 0d14cc3a1cf1
-Create Date: 2021-09-13 23:50:34.643782
+Create Date: 2021-09-14 00:14:56.893591
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "dea7e9aea52b"
+revision = "46f261240bcb"
 down_revision = "0d14cc3a1cf1"
 branch_labels = None
 depends_on = None
@@ -31,7 +31,7 @@ def upgrade_cdn():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("certificate_id", sa.Integer(), nullable=False),
         sa.Column("domain", sa.String(), nullable=False),
-        sa.Column("validation_domain", sa.String(), nullable=False),
+        sa.Column("validation_path", sa.String(), nullable=False),
         sa.Column("validation_contents", sa.Text(), nullable=False),
         sa.Column("body_json", sa.Text(), nullable=True),
         sa.Column("answered", sa.Boolean(), nullable=True),
@@ -60,7 +60,7 @@ def upgrade_domain():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("certificate_id", sa.Integer(), nullable=False),
         sa.Column("domain", sa.String(), nullable=False),
-        sa.Column("validation_domain", sa.String(), nullable=False),
+        sa.Column("validation_path", sa.String(), nullable=False),
         sa.Column("validation_contents", sa.Text(), nullable=False),
         sa.Column("body_json", sa.Text(), nullable=True),
         sa.Column("answered", sa.Boolean(), nullable=True),

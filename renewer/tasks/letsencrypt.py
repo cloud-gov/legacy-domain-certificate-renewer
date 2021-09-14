@@ -44,7 +44,7 @@ class ChallengeNotFound(RuntimeError):
         super().__init__(f"Cannot find any challenges for {domain} in {obj}")
 
 
-def dns_challenge(order, domain):
+def http_challenge(order, domain):
     """Extract authorization resource from within order resource."""
 
     # authorization.body.challenges is a set of ChallengeBody
@@ -195,7 +195,7 @@ def initiate_challenges(session, operation_id: int, instance_type: RouteType):
     certificate.order_json = json.dumps(order.to_json())
 
     for domain in route.domain_external_list():
-        challenge_body = dns_challenge(order, domain)
+        challenge_body = http_challenge(order, domain)
         (
             challenge_response,
             challenge_validation_contents,
@@ -206,7 +206,7 @@ def initiate_challenges(session, operation_id: int, instance_type: RouteType):
 
         challenge.domain = domain
         challenge.certificate = certificate
-        challenge.validation_domain = challenge_body.validation_domain_name(domain)
+        challenge.validation_path = challenge_body.path
         challenge.validation_contents = challenge_validation_contents
         session.add(challenge)
 
