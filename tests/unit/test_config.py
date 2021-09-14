@@ -89,9 +89,14 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("CDN_DATABASE_ENCRYPTION_KEY", "CHANGEME")
     monkeypatch.setenv("DOMAIN_DATABASE_ENCRYPTION_KEY", "CHANGEME")
     monkeypatch.setenv("LETS_ENCRYPT_REGISTRATION_EMAIL", "me@example.com")
+    monkeypatch.setenv("AWS_COMMERCIAL_REGION", "us-west-1")
+    monkeypatch.setenv("AWS_COMMERCIAL_ACCESS_KEY_ID", "ASIANOTAREALKEY")
+    monkeypatch.setenv("AWS_COMMERCIAL_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY")
+    monkeypatch.setenv("COMMERCIAL_BUCKET", "fake-commercial-bucket")
     monkeypatch.setenv("AWS_GOVCLOUD_REGION", "us-gov-west-1")
     monkeypatch.setenv("AWS_GOVCLOUD_ACCESS_KEY_ID", "ASIANOTAREALKEYGOV")
     monkeypatch.setenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY_GOV")
+    monkeypatch.setenv("GOVCLOUD_BUCKET", "fake-govcloud-bucket")
 
 
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
@@ -108,9 +113,14 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.CDN_BROKER_DATABASE_URI == "postgresql://cdn-db-uri"
     assert config.DOMAIN_BROKER_DATABASE_URI == "postgresql://alb-db-uri"
     assert config.RENEW_BEFORE_DAYS == 30
+    assert config.AWS_COMMERCIAL_REGION == "us-west-1"
+    assert config.AWS_COMMERCIAL_ACCESS_KEY_ID == "ASIANOTAREALKEY"
+    assert config.AWS_COMMERCIAL_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY"
+    assert config.COMMERCIAL_BUCKET == "fake-commercial-bucket"
     assert config.AWS_GOVCLOUD_REGION == "us-gov-west-1"
     assert config.AWS_GOVCLOUD_ACCESS_KEY_ID == "ASIANOTAREALKEYGOV"
     assert config.AWS_GOVCLOUD_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY_GOV"
+    assert config.GOVCLOUD_BUCKET == "fake-govcloud-bucket"
     assert config.REDIS_HOST == "my-redis-hostname"
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"

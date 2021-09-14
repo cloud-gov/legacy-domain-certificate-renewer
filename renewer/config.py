@@ -39,11 +39,21 @@ class AppConfig(Config):
         self.CDN_BROKER_DATABASE_URI = normalize_db_url(cdn_db.credentials["uri"])
         alb_db = self.cf_env_parser.get_service(name="rds-domain-broker")
         self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])
+        self.AWS_COMMERCIAL_REGION = self.env_parser("AWS_COMMERCIAL_REGION")
+        self.AWS_COMMERCIAL_ACCESS_KEY_ID = self.env_parser(
+            "AWS_COMMERCIAL_ACCESS_KEY_ID"
+        )
+        self.AWS_COMMERCIAL_SECRET_ACCESS_KEY = self.env_parser(
+            "AWS_COMMERCIAL_SECRET_ACCESS_KEY"
+        )
+        self.COMMERCIAL_BUCKET = self.env_parser("COMMERCIAL_BUCKET")
         self.AWS_GOVCLOUD_REGION = self.env_parser("AWS_GOVCLOUD_REGION")
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = self.env_parser("AWS_GOVCLOUD_ACCESS_KEY_ID")
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = self.env_parser(
             "AWS_GOVCLOUD_SECRET_ACCESS_KEY"
         )
+        self.GOVCLOUD_BUCKET = self.env_parser("GOVCLOUD_BUCKET")
+
         redis = self.cf_env_parser.get_service(label=re.compile("redis.*"))
 
         if not redis:
@@ -57,8 +67,12 @@ class AppConfig(Config):
         self.LETS_ENCRYPT_REGISTRATION_EMAIL = self.env_parser(
             "LETS_ENCRYPT_REGISTRATION_EMAIL"
         )
-        self.CDN_DATABASE_ENCRYPTION_KEY = self.env_parser("CDN_DATABASE_ENCRYPTION_KEY")
-        self.DOMAIN_DATABASE_ENCRYPTION_KEY = self.env_parser("DOMAIN_DATABASE_ENCRYPTION_KEY")
+        self.CDN_DATABASE_ENCRYPTION_KEY = self.env_parser(
+            "CDN_DATABASE_ENCRYPTION_KEY"
+        )
+        self.DOMAIN_DATABASE_ENCRYPTION_KEY = self.env_parser(
+            "DOMAIN_DATABASE_ENCRYPTION_KEY"
+        )
 
 
 class LocalConfig(Config):
@@ -70,9 +84,14 @@ class LocalConfig(Config):
         self.DOMAIN_BROKER_DATABASE_URI = (
             "postgresql://localhost/local-development-domain"
         )
+        self.AWS_COMMERCIAL_REGION = "us-west-1"
+        self.AWS_COMMERCIAL_ACCESS_KEY_ID = "ASIANOTAREALKEY"
+        self.AWS_COMMERCIAL_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY"
+        self.COMMERCIAL_BUCKET = "fake-commercial-bucket"
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
+        self.GOVCLOUD_BUCKET = "fake-govcloud-bucket"
 
         self.REDIS_SSL = False
         self.REDIS_HOST = "localhost"
@@ -94,8 +113,15 @@ class UpgradeSchemaConfig(Config):
         self.DOMAIN_BROKER_DATABASE_URI = normalize_db_url(alb_db.credentials["uri"])
         # silly workaround - we don't have an AWS region, but the config blows up
         # if it's none. Set it to an invalid string, so we can configure but not use boto clients
+        self.AWS_COMMERCIAL_REGION = "none"
+        self.AWS_COMMERCIAL_ACCESS_KEY_ID = None
+        self.AWS_COMMERCIAL_SECRET_ACCESS_KEY = None
         self.AWS_GOVCLOUD_REGION = "none"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = None
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = None
-        self.CDN_DATABASE_ENCRYPTION_KEY = self.env_parser("CDN_DATABASE_ENCRYPTION_KEY")
-        self.DOMAIN_DATABASE_ENCRYPTION_KEY = self.env_parser("DOMAIN_DATABASE_ENCRYPTION_KEY")
+        self.CDN_DATABASE_ENCRYPTION_KEY = self.env_parser(
+            "CDN_DATABASE_ENCRYPTION_KEY"
+        )
+        self.DOMAIN_DATABASE_ENCRYPTION_KEY = self.env_parser(
+            "DOMAIN_DATABASE_ENCRYPTION_KEY"
+        )

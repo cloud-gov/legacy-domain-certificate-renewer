@@ -5,8 +5,10 @@ from renewer.domain_models import (
     DomainOperation,
     DomainRoute,
     DomainAcmeUserV2,
+    DomainCertificate,
+    DomainChallenge,
 )
-from renewer.tasks import letsencrypt
+from renewer.tasks import letsencrypt, s3
 
 
 def test_create_acme_user_when_none_exists(
@@ -63,3 +65,41 @@ def test_gets_new_challenges(clean_db, alb_route: DomainRoute, immediate_huey):
     assert certificate.order_json is not None
     for challenge in certificate.challenges:
         assert challenge.validation_path.startswith("/.well-known")
+
+
+def test_uploads_challenge_files(
+    clean_db, alb_route: DomainRoute, immediate_huey, s3_govcloud
+):
+
+    instance_id = alb_route.instance_id
+    operation = alb_route.create_renewal_operation()
+    certificate = DomainCertificate()
+    operation.certificate = certificate
+    www_challenge = DomainChallenge()
+    apex_challenge = DomainChallenge()
+
+    www_challenge.certificate = certificate
+    www_challenge.domain = "www.example.gov"
+    www_challenge.validation_path = "/.well-known/acme-challenge/wwwchallengegoeshere"
+    www_challenge.validation_contents = "thisisthewwwchallenge"
+
+    apex_challenge.certificate = certificate
+    apex_challenge.domain = "example.gov"
+    apex_challenge.validation_path = "/.well-known/acme-challenge/apexchallengegoeshere"
+    apex_challenge.validation_contents = "thisistheapexchallenge"
+
+    clean_db.add_all([alb_route, operation, certificate, www_challenge, apex_challenge])
+    clean_db.commit()
+
+    s3_govcloud.expect_put_object(
+        "fake-govcloud-bucket",
+        "/.well-known/acme-challenge/wwwchallengegoeshere",
+        b"thisisthewwwchallenge",
+    )
+    s3_govcloud.expect_put_object(
+        "fake-govcloud-bucket",
+        "/.well-known/acme-challenge/apexchallengegoeshere",
+        b"thisistheapexchallenge",
+    )
+
+    s3.upload_challenge_files(operation.id, alb_route.route_type)
