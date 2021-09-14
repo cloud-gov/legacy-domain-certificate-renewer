@@ -17,6 +17,8 @@ cf push \
   --var DOMAIN_DB_NAME="$DOMAIN_DB_NAME" \
   --var APP_NAME="$APP_NAME" \
   --var ENV="upgrade-schema" \
+  --var CDN_DATABASE_ENCRYPTION_KEY="$CDN_DATABASE_ENCRYPTION_KEY" \
+  --var DOMAIN_DATABASE_ENCRYPTION_KEY="$DOMAIN_DATABASE_ENCRYPTION_KEY" \
   --no-route \
   --health-check-type=process \
   -c "sleep 3600" \
