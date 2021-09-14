@@ -30,7 +30,7 @@ DomainBase = declarative.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
-    return config.DATABASE_ENCRYPTION_KEY
+    return config.DOMAIN_DATABASE_ENCRYPTION_KEY
 
 
 def find_active_instances(session):
