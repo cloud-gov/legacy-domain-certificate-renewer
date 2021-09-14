@@ -113,9 +113,8 @@ jobs:
     params:
       <<: *cf-creds-dev
       <<: *upgrade-schema-vars
-      environment_variables:
-        CDN_DATABASE_ENCRYPTION_KEY: ((dev-cdn-database-encryption-key))
-        DOMAIN_DATABASE_ENCRYPTION_KEY: ((dev-domain-database-encryption-key))
+      CDN_DATABASE_ENCRYPTION_KEY: ((dev-cdn-database-encryption-key))
+      DOMAIN_DATABASE_ENCRYPTION_KEY: ((dev-domain-database-encryption-key))
   - put: cf-dev
     params:
       path: src
@@ -173,9 +172,8 @@ jobs:
     params:
       <<: *cf-creds-staging
       <<: *upgrade-schema-vars
-      environment_variables:
-        CDN_DATABASE_ENCRYPTION_KEY: ((staging-cdn-database-encryption-key))
-        DOMAIN_DATABASE_ENCRYPTION_KEY: ((staging-domain-database-encryption-key))
+      CDN_DATABASE_ENCRYPTION_KEY: ((staging-cdn-database-encryption-key))
+      DOMAIN_DATABASE_ENCRYPTION_KEY: ((staging-domain-database-encryption-key))
   - put: cf-staging
     params:
       path: src
@@ -233,9 +231,8 @@ jobs:
     params:
       <<: *cf-creds-production
       <<: *upgrade-schema-vars
-      environment_variables:
-        CDN_DATABASE_ENCRYPTION_KEY: ((production-cdn-database-encryption-key))
-        DOMAIN_DATABASE_ENCRYPTION_KEY: ((production-domain-database-encryption-key))
+      CDN_DATABASE_ENCRYPTION_KEY: ((production-cdn-database-encryption-key))
+      DOMAIN_DATABASE_ENCRYPTION_KEY: ((production-domain-database-encryption-key))
   - put: cf-production
     params:
       path: src
