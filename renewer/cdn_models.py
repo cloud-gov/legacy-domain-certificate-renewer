@@ -30,7 +30,7 @@ CdnBase = declarative.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
-    return config.DATABASE_ENCRYPTION_KEY
+    return config.CDN_DATABASE_ENCRYPTION_KEY
 
 
 class CdnUserData(CdnBase):
