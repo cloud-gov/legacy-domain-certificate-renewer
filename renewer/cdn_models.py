@@ -176,7 +176,7 @@ class CdnChallenge(CdnBase):
         sa.Integer, sa.ForeignKey(CdnCertificate.id), nullable=False
     )
     domain = sa.Column(sa.String, nullable=False)
-    validation_domain = sa.Column(sa.String, nullable=False)
+    validation_path = sa.Column(sa.String, nullable=False)
     validation_contents = sa.Column(sa.Text, nullable=False)
     body_json = sa.Column(sa.Text)
     answered = sa.Column(sa.Boolean, default=False)

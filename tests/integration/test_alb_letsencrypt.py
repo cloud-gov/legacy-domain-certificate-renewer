@@ -61,3 +61,5 @@ def test_gets_new_challenges(clean_db, alb_route: DomainRoute, immediate_huey):
     certificate = operation.certificate
     assert certificate.challenges.count() == 2
     assert certificate.order_json is not None
+    for challenge in certificate.challenges:
+        assert challenge.validation_path.startswith("/.well-known")
