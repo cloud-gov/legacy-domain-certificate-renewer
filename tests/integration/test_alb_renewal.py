@@ -103,3 +103,26 @@ def test_uploads_challenge_files(
     )
 
     s3.upload_challenge_files(operation.id, alb_route.route_type)
+
+
+def test_answer_challenges(clean_db, alb_route: DomainRoute, immediate_huey):
+    instance_id = alb_route.instance_id
+    operation = alb_route.create_renewal_operation()
+    clean_db.add(alb_route)
+    clean_db.add(operation)
+    clean_db.commit()
+    operation_id = operation.id
+    # setup
+    letsencrypt.create_user(operation_id, alb_route.route_type)
+    letsencrypt.create_private_key_and_csr(operation_id, alb_route.route_type)
+    letsencrypt.initiate_challenges(operation_id, alb_route.route_type)
+    # note: we're skipping the file upload step here, because we don't need it
+    # for the test
+
+    # function we're actually testing
+    letsencrypt.answer_challenges(operation_id, alb_route.route_type)
+    clean_db.expunge_all()
+
+    operation = clean_db.query(DomainOperation).get(operation_id)
+    certificate = operation.certificate
+    assert all([c.answered for c in certificate.challenges])

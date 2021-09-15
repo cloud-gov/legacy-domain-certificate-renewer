@@ -15,10 +15,7 @@ class FakeS3(FakeAWS):
             "Body": object_body_bytes,
             "ServerSideEncryption": "AES256",
         }
-        response = {
-            "ETag": "whatsanetag",
-            "ServerSideEncryption": "AES256",
-        }
+        response = {"ETag": "whatsanetag", "ServerSideEncryption": "AES256"}
         self.stubber.add_response("put_object", response, request)
 
 
