@@ -125,6 +125,7 @@ class DomainCertificate(DomainBase):
     # cert_url is the Let's Encrypt URL for the certificate
     cert_url = sa.Column(sa.Text)
     # certificate is the actual body of the certificate chain
+    # this was used by the old broker, but the renewer uses fullchain_pem and leaf_pem instead
     certificate = sa.Column(postgresql.BYTEA)
     arn = sa.Column(sa.Text)
     name = sa.Column(sa.Text)
@@ -137,6 +138,11 @@ class DomainCertificate(DomainBase):
         "DomainChallenge", backref="certificate", lazy="dynamic"
     )
     order_json = sa.Column(sa.Text)
+    fullchain_pem = sa.Column(sa.Text)
+    leaf_pem = sa.Column(sa.Text)
+    iam_server_certificate_id = sa.Column(sa.Text)
+    iam_server_certificate_name = sa.Column(sa.Text)
+    iam_server_certificate_arn = sa.Column(sa.Text)
 
     @property
     def needs_renewal(self):

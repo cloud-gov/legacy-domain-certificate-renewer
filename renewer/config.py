@@ -30,6 +30,9 @@ class Config:
         self.cf_env_parser = AppEnv()
         self.ENV = self.env_parser("ENV")
         self.RENEW_BEFORE_DAYS = 30
+        self.ACME_POLL_TIMEOUT_IN_SECONDS = self.env_parser(
+            "ACME_POLL_TIMEOUT_IN_SECONDS", 90
+        )
 
 
 class AppConfig(Config):
