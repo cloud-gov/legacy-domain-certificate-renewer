@@ -7,4 +7,4 @@ we do this in a file separate from renewer.huey to avoid circular imports
 imports renewer.huey)
 """
 from renewer.huey import huey
-from renewer.tasks import cron
+from renewer.tasks import migrations
