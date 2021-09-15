@@ -19,7 +19,7 @@ if ! pgrep -x pebble > /dev/null; then
   echo "Starting Pebble"
   (
     cd /
-    PEBBLE_WFE_NONCEREJECT=0 pebble \
+    PEBBLE_VA_ALWAYS_VALID=1 PEBBLE_WFE_NONCEREJECT=0 pebble \
       -config="/test/config/pebble-config.json" \
       -dnsserver="127.0.0.1:8053" \
       -strict \

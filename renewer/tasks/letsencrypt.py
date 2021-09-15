@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 from typing import Type, Union
 
 import josepy
@@ -26,6 +28,8 @@ from renewer.extensions import config
 from renewer.acme_client import AcmeClient
 from renewer import huey
 from renewer.route_type import RouteType
+
+logger = logging.getLogger(__name__)
 
 TOperation = Type[Union[DomainOperation, CdnOperation]]
 TUser = Type[Union[DomainAcmeUserV2, CdnAcmeUserV2]]
@@ -210,4 +214,70 @@ def initiate_challenges(session, operation_id: int, instance_type: RouteType):
         challenge.validation_contents = challenge_validation_contents
         session.add(challenge)
 
+    session.commit()
+
+
+@huey.retriable_task
+def answer_challenges(session, operation_id: int, instance_type: RouteType):
+    Operation: TOperation
+    Challenge: TChallenge
+
+    if instance_type is RouteType.ALB:
+        Operation = DomainOperation
+        Challenge = DomainChallenge
+    elif instance_type is RouteType.CDN:
+        Operation = CdnOperation
+        Challenge = CdnChallenge
+
+    operation = session.query(Operation).get(operation_id)
+    route = operation.route
+    acme_user = route.acme_user
+    certificate = operation.certificate
+    challenges = certificate.challenges.all()
+    unanswered = [c for c in challenges if not c.answered]
+
+    if not unanswered:
+        return
+
+    # todo: add sleep here
+
+    account_key = serialization.load_pem_private_key(
+        acme_user.private_key_pem.encode(), password=None, backend=default_backend()
+    )
+    wrapped_account_key = josepy.JWKRSA(key=account_key)
+
+    registration = json.loads(acme_user.registration_json)
+    net = client.ClientNetwork(
+        wrapped_account_key,
+        user_agent="cloud.gov legacy domain renewer",
+        account=registration,
+    )
+    directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
+    client_acme = AcmeClient(directory, net=net)
+
+    for challenge in unanswered:
+        if json.loads(challenge.body_json)["status"] == "valid":
+            # this covers an edge case where we try to get the sane certificate
+            # twice in a short period.
+            # it arguably makes more sense to do when we get the challenges
+            # but doing so makes testing worlds harder
+            challenge.answered = True
+            session.add(challenge)
+            session.commit()
+            continue
+        challenge_body = messages.ChallengeBody.from_json(
+            json.loads(challenge.body_json)
+        )
+        challenge_response = challenge_body.response(wrapped_account_key)
+        # Let the CA server know that we are ready for the challenge.
+        response = client_acme.answer_challenge(challenge_body, challenge_response)
+        print(response)
+        if response.body.error is not None:
+            # log the error for now. We haven't reproduced this locally, so we can't act on it yet
+            # but it would be interesting in the real world
+            logger.error(
+                f"challenge for instance {route.id} errored. Error: {response.body.error}"
+            )
+        challenge.answered = True
+        session.add(challenge)
     session.commit()

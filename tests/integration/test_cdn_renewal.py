@@ -102,3 +102,31 @@ def test_uploads_challenge_files(
     )
 
     s3.upload_challenge_files(operation.id, cdn_route.route_type)
+
+
+def test_answer_challenges(clean_db, cdn_route: CdnRoute, immediate_huey):
+    # this tests that we call answer challenges correctly.
+    # We have pebble set to not validate challenges, though, because
+    # we don't have a meaningful way to validate them, so our test is
+    # pretty much limited to happy-path testing and assuming that we got
+    # the s3 stuff done correctly.
+    instance_id = cdn_route.instance_id
+    operation = cdn_route.create_renewal_operation()
+    clean_db.add(cdn_route)
+    clean_db.add(operation)
+    clean_db.commit()
+    operation_id = operation.id
+    # setup
+    letsencrypt.create_user(operation_id, cdn_route.route_type)
+    letsencrypt.create_private_key_and_csr(operation_id, cdn_route.route_type)
+    letsencrypt.initiate_challenges(operation_id, cdn_route.route_type)
+    # note: we're skipping the file upload step here, because we don't need it
+    # for the test
+
+    # function we're actually testing
+    letsencrypt.answer_challenges(operation_id, cdn_route.route_type)
+    clean_db.expunge_all()
+
+    operation = clean_db.query(CdnOperation).get(operation_id)
+    certificate = operation.certificate
+    assert all([c.answered for c in certificate.challenges])
