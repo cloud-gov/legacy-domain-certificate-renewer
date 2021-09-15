@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from renewer.cdn_models import (
@@ -130,3 +132,27 @@ def test_answer_challenges(clean_db, cdn_route: CdnRoute, immediate_huey):
     operation = clean_db.query(CdnOperation).get(operation_id)
     certificate = operation.certificate
     assert all([c.answered for c in certificate.challenges])
+
+
+def test_retrieve_certificate(clean_db, cdn_route: CdnRoute, immediate_huey):
+    instance_id = cdn_route.instance_id
+    operation = cdn_route.create_renewal_operation()
+    clean_db.add(cdn_route)
+    clean_db.add(operation)
+    clean_db.commit()
+    operation_id = operation.id
+    # setup
+    letsencrypt.create_user(operation_id, cdn_route.route_type)
+    letsencrypt.create_private_key_and_csr(operation_id, cdn_route.route_type)
+    letsencrypt.initiate_challenges(operation_id, cdn_route.route_type)
+    letsencrypt.answer_challenges(operation_id, cdn_route.route_type)
+
+    letsencrypt.retrieve_certificate(operation_id, cdn_route.route_type)
+    clean_db.expunge_all()
+
+    operation = clean_db.query(CdnOperation).get(operation_id)
+    certificate = operation.certificate
+    assert certificate.fullchain_pem.count("BEGIN CERTIFICATE") == 1
+    assert certificate.leaf_pem.count("BEGIN CERTIFICATE") == 1
+    assert certificate.expires is not None
+    assert json.loads(certificate.order_json)["body"]["status"] == "valid"

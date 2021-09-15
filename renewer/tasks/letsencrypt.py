@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta, timezone
 import json
 import logging
-from typing import Type, Union
+import re
+from typing import Type, Union, Tuple
 
 import josepy
 from OpenSSL import crypto
@@ -277,4 +279,117 @@ def answer_challenges(session, operation_id: int, instance_type: RouteType):
             )
         challenge.answered = True
         session.add(challenge)
+    session.commit()
+
+
+@huey.retriable_task
+def retrieve_certificate(session, operation_id: int, instance_type: RouteType):
+    def cert_from_fullchain(fullchain_pem: str) -> Tuple[str, str]:
+        """extract cert_pem from fullchain_pem
+
+        Reference https://github.com/certbot/certbot/blob/b42e24178aaa3f1ad1323acb6a3a9c63e547893f/certbot/certbot/crypto_util.py#L482-L518
+        """
+        cert_pem_regex = re.compile(
+            b"-----BEGIN CERTIFICATE-----\r?.+?\r?-----END CERTIFICATE-----\r?",
+            re.DOTALL,  # DOTALL (/s) because the base64text may include newlines
+        )
+
+        certs = cert_pem_regex.findall(fullchain_pem.encode())
+        if len(certs) < 2:
+            raise RuntimeError(
+                "failed to extract cert from fullchain: fewer than 2 certificates in chain"
+            )
+
+        certs_normalized = [
+            crypto.dump_certificate(
+                crypto.FILETYPE_PEM, crypto.load_certificate(crypto.FILETYPE_PEM, cert)
+            ).decode()
+            for cert in certs
+        ]
+
+        return certs_normalized[0], "".join(certs_normalized[1:])
+
+    Operation: TOperation
+    Challenge: TChallenge
+
+    if instance_type is RouteType.ALB:
+        Operation = DomainOperation
+        Challenge = DomainChallenge
+    elif instance_type is RouteType.CDN:
+        Operation = CdnOperation
+        Challenge = CdnChallenge
+
+    operation = session.query(Operation).get(operation_id)
+    route = operation.route
+    acme_user = route.acme_user
+    certificate = operation.certificate
+
+    if certificate.leaf_pem is not None:
+        return
+
+    account_key = serialization.load_pem_private_key(
+        acme_user.private_key_pem.encode(), password=None, backend=default_backend()
+    )
+    wrapped_account_key = josepy.JWKRSA(key=account_key)
+
+    registration = json.loads(acme_user.registration_json)
+    net = client.ClientNetwork(
+        wrapped_account_key,
+        user_agent="cloud.gov external domain broker",
+        account=registration,
+    )
+    directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
+    client_acme = AcmeClient(directory, net=net)
+
+    order_json = json.loads(certificate.order_json)
+    # The csr_pem in the JSON is a binary string, but finalize_order() expects
+    # utf-8?  So we set it here from our saved copy.
+    order_json["csr_pem"] = certificate.csr_pem
+    order = messages.OrderResource.from_json(order_json)
+
+    deadline = datetime.now() + timedelta(seconds=config.ACME_POLL_TIMEOUT_IN_SECONDS)
+    try:
+        finalized_order = client_acme.poll_and_finalize(orderr=order, deadline=deadline)
+    except messages.Error as e:
+        # this means we're trying to fulfill an order that's already fulfilled
+        if """Order's status ("valid")""" in e.detail:
+            # Check if we got a certificate already. Do we have a cert, and does its expiration look good?
+            next_month = datetime.now() + timedelta(days=31)
+            next_month = next_month.replace(tzinfo=timezone.utc)
+            if certificate.expires is not None and certificate.expires > next_month:
+                return
+            else:
+                finalized_order = client_acme.get_cert_for_finalized_order(
+                    order, deadline
+                )
+        else:
+            logger.error(
+                f"failed to retrieve certificate for {route.domain_names} with code {e.code}, {e.description}, {e.detail}"
+            )
+            raise e
+    except errors.ValidationError as e:
+        logger.error(
+            f"failed to retrieve certificate for {route.domain_names} with errors {e.failed_authzrs}"
+        )
+        # if we fail validation, nuke the cert record and its challenges.
+        # this way, when we retry from the beginning, we won't try to reuse them
+        # the bad new is that we'll still retry this task a bunch of times before the pipeline fails
+        operation.certificate = None
+        session.add(operation)
+        session.commit()
+        raise e
+
+    certificate.leaf_pem, certificate.fullchain_pem = cert_from_fullchain(
+        finalized_order.fullchain_pem
+    )
+    x509 = crypto.load_certificate(crypto.FILETYPE_PEM, certificate.leaf_pem.encode())
+    not_after_bytes = x509.get_notAfter()
+    if not_after_bytes is not None:
+        not_after = not_after_bytes.decode("utf-8")
+        certificate.expires = datetime.strptime(not_after, "%Y%m%d%H%M%Sz")
+    else:
+        raise RuntimeError("failed to get not_after")
+    certificate.order_json = json.dumps(finalized_order.to_json())
+    session.add(route)
+    session.add(certificate)
     session.commit()
