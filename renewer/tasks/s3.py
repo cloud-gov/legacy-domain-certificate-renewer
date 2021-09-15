@@ -1,3 +1,4 @@
+import time
 from typing import Type, Union
 
 from renewer.aws import s3_commercial, s3_govcloud
@@ -34,3 +35,5 @@ def upload_challenge_files(session, operation_id, route_type):
                 Key=challenge.validation_path,
                 ServerSideEncryption="AES256",
             )
+    # sleep to make sure the file will be in S3 when we want it
+    time.sleep(config.S3_PROPAGATION_TIME)

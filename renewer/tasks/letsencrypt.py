@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 from typing import Type, Union
 
 import josepy
@@ -238,8 +237,6 @@ def answer_challenges(session, operation_id: int, instance_type: RouteType):
 
     if not unanswered:
         return
-
-    # todo: add sleep here
 
     account_key = serialization.load_pem_private_key(
         acme_user.private_key_pem.encode(), password=None, backend=default_backend()

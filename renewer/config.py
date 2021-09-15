@@ -73,6 +73,7 @@ class AppConfig(Config):
         self.DOMAIN_DATABASE_ENCRYPTION_KEY = self.env_parser(
             "DOMAIN_DATABASE_ENCRYPTION_KEY"
         )
+        self.S3_PROPAGATION_TIME = self.env_parser.int("S3_PROPAGATION_TIME", 10)
 
 
 class LocalConfig(Config):
@@ -102,6 +103,7 @@ class LocalConfig(Config):
         self.LETS_ENCRYPT_REGISTRATION_EMAIL = "ops@example.com"
         self.DOMAIN_DATABASE_ENCRYPTION_KEY = "feedabee"
         self.CDN_DATABASE_ENCRYPTION_KEY = "changeme"
+        self.S3_PROPAGATION_TIME = 0
 
 
 class UpgradeSchemaConfig(Config):
