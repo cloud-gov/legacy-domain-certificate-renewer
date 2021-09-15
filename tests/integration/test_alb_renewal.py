@@ -106,6 +106,11 @@ def test_uploads_challenge_files(
 
 
 def test_answer_challenges(clean_db, alb_route: DomainRoute, immediate_huey):
+    # this tests that we call answer challenges correctly.
+    # We have pebble set to not validate challenges, though, because 
+    # we don't have a meaningful way to validate them, so our test is 
+    # pretty much limited to happy-path testing and assuming that we got 
+    # the s3 stuff done correctly. 
     instance_id = alb_route.instance_id
     operation = alb_route.create_renewal_operation()
     clean_db.add(alb_route)
@@ -122,7 +127,7 @@ def test_answer_challenges(clean_db, alb_route: DomainRoute, immediate_huey):
     # function we're actually testing
     letsencrypt.answer_challenges(operation_id, alb_route.route_type)
     clean_db.expunge_all()
-
+    
     operation = clean_db.query(DomainOperation).get(operation_id)
     certificate = operation.certificate
     assert all([c.answered for c in certificate.challenges])
