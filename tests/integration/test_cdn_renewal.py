@@ -10,7 +10,7 @@ from renewer.cdn_models import (
     CdnCertificate,
     CdnChallenge,
 )
-from renewer.tasks import iam, letsencrypt, s3
+from renewer.tasks import cdn, iam, letsencrypt, s3
 
 
 def test_create_acme_user_when_none_exists(
@@ -218,3 +218,45 @@ def test_upload_cert_to_iam(
     assert certificate.iam_server_certificate_id.startswith("FAKE_CERT_ID")
     assert certificate.iam_server_certificate_arn
     assert certificate.iam_server_certificate_arn.startswith("arn:aws:iam")
+
+
+def test_associate_cert(clean_db, cdn_route: CdnRoute, immediate_huey, cloudfront):
+    operation = cdn_route.create_renewal_operation()
+    certificate = CdnCertificate()
+    operation.certificate = certificate
+
+    today = date.today().isoformat()
+    certificate.iam_server_certificate_name = (
+        f"{cdn_route.instance_id}-{today}-{certificate.id}"
+    )
+    certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{cdn_route.instance_id}"
+    certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/cloudfront/test/{certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, certificate])
+    clean_db.commit()
+
+    cloudfront.expect_get_distribution_config(
+        caller_reference="4321",
+        domains=["example.com", "foo.com"],
+        certificate_id="certificate_id",
+        origin_hostname="origin_hostname",
+        origin_path="origin_path",
+        distribution_id="fakedistid",
+        bucket_prefix="4321/",
+    )
+    cloudfront.expect_update_distribution(
+        caller_reference="4321",
+        domains=["example.com", "foo.com"],
+        certificate_id=f"FAKE_CERT_ID-{cdn_route.instance_id}",
+        origin_hostname="origin_hostname",
+        origin_path="origin_path",
+        distribution_id="fakedistid",
+        distribution_hostname="fake1234.cloudfront.net",
+        bucket_prefix="4321/",
+    )
+
+    cdn.associate_certificate(operation.id)
+
+    clean_db.expunge_all()
