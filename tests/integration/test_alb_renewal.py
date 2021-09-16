@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 import json
 
 import pytest
@@ -11,7 +11,8 @@ from renewer.domain_models import (
     DomainCertificate,
     DomainChallenge,
 )
-from renewer.tasks import letsencrypt, s3, iam
+from renewer.tasks import iam, letsencrypt, s3
+from renewer.tasks import alb as alb_tasks
 
 
 def test_create_acme_user_when_none_exists(
@@ -219,3 +220,71 @@ def test_upload_cert_to_iam(
     assert certificate.iam_server_certificate_id.startswith("FAKE_CERT_ID")
     assert certificate.iam_server_certificate_arn
     assert certificate.iam_server_certificate_arn.startswith("arn:aws:iam")
+
+
+def test_associate_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
+    operation = alb_route.create_renewal_operation()
+    certificate = DomainCertificate()
+    operation.certificate = certificate
+
+    today = date.today().isoformat()
+    certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{certificate.id}"
+    )
+    certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{alb_route.instance_id}"
+    certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, certificate])
+    clean_db.commit()
+
+    alb.expect_add_certificate_to_listener(
+        "arn:aws:listener:1234", certificate.iam_server_certificate_arn
+    )
+
+    alb_tasks.associate_certificate(operation.id)
+
+    clean_db.expunge_all()
+
+
+def test_remove_old_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
+    operation = alb_route.create_renewal_operation()
+    new_certificate = DomainCertificate()
+    new_certificate.expires = datetime.now() + timedelta(days=90)
+    old_certificate = DomainCertificate()
+    old_certificate.route = alb_route
+    old_certificate.expires = datetime.now() + timedelta(days=30)
+    operation.certificate = new_certificate
+
+    today = date.today().isoformat()
+    old_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{old_certificate.id}"
+    )
+    old_certificate.iam_server_certificate_id = (
+        f"FAKE_CERT_ID-{alb_route.instance_id}-OLD"
+    )
+    old_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
+    )
+
+    new_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{new_certificate.id}"
+    )
+    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{alb_route.instance_id}"
+    new_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, new_certificate, old_certificate, alb_route])
+    clean_db.commit()
+
+    alb.expect_remove_certificate_from_listener(
+        "arn:aws:listener:1234", old_certificate.iam_server_certificate_arn
+    )
+
+    alb_tasks.remove_old_certificate(operation.id)
+    # run it twice, to make sure a retry won't nuke the good cert
+    alb_tasks.remove_old_certificate(operation.id)
+
+    clean_db.expunge_all()
