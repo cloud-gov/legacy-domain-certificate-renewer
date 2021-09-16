@@ -50,12 +50,14 @@ class AppConfig(Config):
             "AWS_COMMERCIAL_SECRET_ACCESS_KEY"
         )
         self.COMMERCIAL_BUCKET = self.env_parser("COMMERCIAL_BUCKET")
+        self.COMMERCIAL_IAM_PREFIX = self.env_parser("COMMERCIAL_IAM_PREFIX")
         self.AWS_GOVCLOUD_REGION = self.env_parser("AWS_GOVCLOUD_REGION")
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = self.env_parser("AWS_GOVCLOUD_ACCESS_KEY_ID")
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = self.env_parser(
             "AWS_GOVCLOUD_SECRET_ACCESS_KEY"
         )
         self.GOVCLOUD_BUCKET = self.env_parser("GOVCLOUD_BUCKET")
+        self.GOVCLOUD_IAM_PREFIX = self.env_parser("GOVCLOUD_IAM_PREFIX")
 
         redis = self.cf_env_parser.get_service(label=re.compile("redis.*"))
 
@@ -92,10 +94,12 @@ class LocalConfig(Config):
         self.AWS_COMMERCIAL_ACCESS_KEY_ID = "ASIANOTAREALKEY"
         self.AWS_COMMERCIAL_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY"
         self.COMMERCIAL_BUCKET = "fake-commercial-bucket"
+        self.COMMERCIAL_IAM_PREFIX = "/cloudfront/test/"
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
         self.GOVCLOUD_BUCKET = "fake-govcloud-bucket"
+        self.GOVCLOUD_IAM_PREFIX = "/alb/test/"
 
         self.REDIS_SSL = False
         self.REDIS_HOST = "localhost"

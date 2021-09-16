@@ -1,3 +1,4 @@
+from datetime import date
 import json
 
 import pytest
@@ -10,7 +11,7 @@ from renewer.domain_models import (
     DomainCertificate,
     DomainChallenge,
 )
-from renewer.tasks import letsencrypt, s3
+from renewer.tasks import letsencrypt, s3, iam
 
 
 def test_create_acme_user_when_none_exists(
@@ -157,3 +158,64 @@ def test_retrieve_certificate(clean_db, alb_route: DomainRoute, immediate_huey):
     assert certificate.leaf_pem.count("BEGIN CERTIFICATE") == 1
     assert certificate.expires is not None
     assert json.loads(certificate.order_json)["body"]["status"] == "valid"
+
+
+def test_upload_cert_to_iam(
+    clean_db, alb_route: DomainRoute, immediate_huey, iam_govcloud
+):
+
+    operation = alb_route.create_renewal_operation()
+    certificate = DomainCertificate()
+    operation.certificate = certificate
+
+    certificate.fullchain_pem = """
+    -----BEGIN CERTIFICATE-----
+    look! a leaf cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    look! an intermediate cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    look! a CA cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    """
+    certificate.leaf_pem = """
+    -----BEGIN CERTIFICATE-----
+    look! a leaf cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    """
+    certificate.private_key_pem = """
+    -----BEGIN PRIVATE KEY-----
+    don't look! a private key!
+    these are longer in reality though
+    -----END PRIVATE KEY-----
+    """
+
+    clean_db.add_all([operation, alb_route, certificate])
+    clean_db.commit()
+    today = date.today().isoformat()
+    operation_id = operation.id
+
+    iam_govcloud.expect_upload_server_certificate(
+        name=f"{alb_route.instance_id}-{today}-{certificate.id}",
+        cert=certificate.leaf_pem,
+        private_key=certificate.private_key_pem,
+        chain=certificate.fullchain_pem,
+        path="/alb/test/",
+    )
+
+    clean_db.expunge_all()
+
+    iam.upload_certificate(operation_id, alb_route.route_type)
+    operation = clean_db.query(DomainOperation).get(operation_id)
+    certificate = operation.certificate
+    assert certificate.iam_server_certificate_name
+    assert certificate.iam_server_certificate_name.startswith(alb_route.instance_id)
+    assert certificate.iam_server_certificate_id
+    assert certificate.iam_server_certificate_id.startswith("FAKE_CERT_ID")
+    assert certificate.iam_server_certificate_arn
+    assert certificate.iam_server_certificate_arn.startswith("arn:aws:iam")

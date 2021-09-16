@@ -28,15 +28,10 @@ from renewer.domain_models import (
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
 from renewer import huey
+from renewer.types import TOperation, TCertificate, TChallenge, TUser, TRoute
 from renewer.route_type import RouteType
 
 logger = logging.getLogger(__name__)
-
-TOperation = Type[Union[DomainOperation, CdnOperation]]
-TUser = Type[Union[DomainAcmeUserV2, CdnAcmeUserV2]]
-TRoute = Type[Union[DomainRoute, CdnRoute]]
-TCertificate = Type[Union[DomainCertificate, CdnCertificate]]
-TChallenge = Type[Union[DomainChallenge, CdnChallenge]]
 
 
 class DNSChallengeNotFound(RuntimeError):
@@ -385,6 +380,7 @@ def retrieve_certificate(session, operation_id: int, instance_type: RouteType):
     x509 = crypto.load_certificate(crypto.FILETYPE_PEM, certificate.leaf_pem.encode())
     not_after_bytes = x509.get_notAfter()
     if not_after_bytes is not None:
+        # None check should be an extreme edge case, but it makes mypy happy :shrug:
         not_after = not_after_bytes.decode("utf-8")
         certificate.expires = datetime.strptime(not_after, "%Y%m%d%H%M%Sz")
     else:
