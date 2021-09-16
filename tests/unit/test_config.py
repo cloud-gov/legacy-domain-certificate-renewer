@@ -93,10 +93,12 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("AWS_COMMERCIAL_ACCESS_KEY_ID", "ASIANOTAREALKEY")
     monkeypatch.setenv("AWS_COMMERCIAL_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY")
     monkeypatch.setenv("COMMERCIAL_BUCKET", "fake-commercial-bucket")
+    monkeypatch.setenv("COMMERCIAL_IAM_PREFIX", "/commercial/certs")
     monkeypatch.setenv("AWS_GOVCLOUD_REGION", "us-gov-west-1")
     monkeypatch.setenv("AWS_GOVCLOUD_ACCESS_KEY_ID", "ASIANOTAREALKEYGOV")
     monkeypatch.setenv("AWS_GOVCLOUD_SECRET_ACCESS_KEY", "NOT_A_REAL_SECRET_KEY_GOV")
     monkeypatch.setenv("GOVCLOUD_BUCKET", "fake-govcloud-bucket")
+    monkeypatch.setenv("GOVCLOUD_IAM_PREFIX", "/govcloud/certs")
     monkeypatch.setenv("S3_PROPAGATION_TIME", "5")
 
 
@@ -118,10 +120,12 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.AWS_COMMERCIAL_ACCESS_KEY_ID == "ASIANOTAREALKEY"
     assert config.AWS_COMMERCIAL_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY"
     assert config.COMMERCIAL_BUCKET == "fake-commercial-bucket"
+    assert config.COMMERCIAL_IAM_PREFIX == "/commercial/certs"
     assert config.AWS_GOVCLOUD_REGION == "us-gov-west-1"
     assert config.AWS_GOVCLOUD_ACCESS_KEY_ID == "ASIANOTAREALKEYGOV"
     assert config.AWS_GOVCLOUD_SECRET_ACCESS_KEY == "NOT_A_REAL_SECRET_KEY_GOV"
     assert config.GOVCLOUD_BUCKET == "fake-govcloud-bucket"
+    assert config.GOVCLOUD_IAM_PREFIX == "/govcloud/certs"
     assert config.REDIS_HOST == "my-redis-hostname"
     assert config.REDIS_PORT == "my-redis-port"
     assert config.REDIS_PASSWORD == "my-redis-password"

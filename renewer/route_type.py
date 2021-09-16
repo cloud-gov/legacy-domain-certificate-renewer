@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Union, Type
 
 
 class RouteType(Enum):
