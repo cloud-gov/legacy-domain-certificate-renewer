@@ -123,6 +123,9 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: development
+        AWS_POLL_WAIT_TIME_IN_SECONDS: ((aws-poll-time-in-seconds))
+        AWS_POLL_MAX_ATTEMPTS: ((aws-poll-max-attempts))
+        IAM_PROPAGATION_TIME: ((iam-propagation-time))
         AWS_COMMERCIAL_REGION: ((dev-aws-commercial-region))
         AWS_COMMERCIAL_SECRET_ACCESS_KEY: ((dev-aws-commercial-secret-access-key))
         AWS_COMMERCIAL_ACCESS_KEY_ID: ((dev-aws-commercial-access-key-id))
@@ -189,6 +192,9 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: staging
+        AWS_POLL_WAIT_TIME_IN_SECONDS: ((aws-poll-time-in-seconds))
+        AWS_POLL_MAX_ATTEMPTS: ((aws-poll-max-attempts))
+        IAM_PROPAGATION_TIME: ((iam-propagation-time))
         AWS_COMMERCIAL_REGION: ((staging-aws-commercial-region))
         AWS_COMMERCIAL_SECRET_ACCESS_KEY: ((staging-aws-commercial-secret-access-key))
         AWS_COMMERCIAL_ACCESS_KEY_ID: ((staging-aws-commercial-access-key-id))
@@ -255,6 +261,9 @@ jobs:
       <<: *cf-manifest-vars
       environment_variables:
         ENV: production
+        AWS_POLL_WAIT_TIME_IN_SECONDS: ((aws-poll-time-in-seconds))
+        AWS_POLL_MAX_ATTEMPTS: ((aws-poll-max-attempts))
+        IAM_PROPAGATION_TIME: ((iam-propagation-time))
         AWS_COMMERCIAL_REGION: ((production-aws-commercial-region))
         AWS_COMMERCIAL_SECRET_ACCESS_KEY: ((production-aws-commercial-secret-access-key))
         AWS_COMMERCIAL_ACCESS_KEY_ID: ((production-aws-commercial-access-key-id))

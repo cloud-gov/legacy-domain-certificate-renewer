@@ -14,6 +14,8 @@ from renewer.domain_models import (
 from renewer.tasks import iam, letsencrypt, s3
 from renewer.tasks import alb as alb_tasks
 
+from tests.lib.fake_iam import FakeIAM
+
 
 def test_create_acme_user_when_none_exists(
     clean_db, alb_route: DomainRoute, immediate_huey
@@ -288,3 +290,85 @@ def test_remove_old_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
     alb_tasks.remove_old_certificate(operation.id)
 
     clean_db.expunge_all()
+
+
+def test_delete_old_certificate(
+    clean_db, alb_route: DomainRoute, iam_govcloud: FakeIAM, immediate_huey
+):
+    operation = alb_route.create_renewal_operation()
+    new_certificate = DomainCertificate()
+    new_certificate.route = alb_route
+    new_certificate.expires = datetime.now() + timedelta(days=90)
+    old_certificate = DomainCertificate()
+    old_certificate.route = alb_route
+    old_certificate.expires = datetime.now() + timedelta(days=30)
+    operation.certificate = new_certificate
+
+    today = date.today().isoformat()
+    old_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{old_certificate.id}"
+    )
+    old_certificate.iam_server_certificate_id = (
+        f"FAKE_CERT_ID-{alb_route.instance_id}-OLD"
+    )
+    old_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
+    )
+
+    new_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{new_certificate.id}"
+    )
+    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{alb_route.instance_id}"
+    new_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, new_certificate, old_certificate, alb_route])
+    clean_db.commit()
+
+    iam_govcloud.expects_delete_server_certificate(
+        f"{alb_route.instance_id}-{today}-{old_certificate.id}"
+    )
+
+    iam.delete_old_certificate(operation.id, alb_route.route_type)
+
+
+def test_delete_nonexistent_old_certificate(
+    clean_db, alb_route: DomainRoute, iam_govcloud: FakeIAM, immediate_huey
+):
+    operation = alb_route.create_renewal_operation()
+    new_certificate = DomainCertificate()
+    new_certificate.route = alb_route
+    new_certificate.expires = datetime.now() + timedelta(days=90)
+    old_certificate = DomainCertificate()
+    old_certificate.route = alb_route
+    old_certificate.expires = datetime.now() + timedelta(days=30)
+    operation.certificate = new_certificate
+
+    today = date.today().isoformat()
+    old_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{old_certificate.id}"
+    )
+    old_certificate.iam_server_certificate_id = (
+        f"FAKE_CERT_ID-{alb_route.instance_id}-OLD"
+    )
+    old_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
+    )
+
+    new_certificate.iam_server_certificate_name = (
+        f"{alb_route.instance_id}-{today}-{new_certificate.id}"
+    )
+    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{alb_route.instance_id}"
+    new_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, new_certificate, old_certificate, alb_route])
+    clean_db.commit()
+
+    iam_govcloud.expects_delete_server_certificate_returning_no_such_entity(
+        f"{alb_route.instance_id}-{today}-{old_certificate.id}"
+    )
+
+    iam.delete_old_certificate(operation.id, alb_route.route_type)

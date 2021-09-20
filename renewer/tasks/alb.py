@@ -1,6 +1,9 @@
+import time
+
 from renewer import huey
 from renewer.aws import alb
 from renewer.domain_models import DomainOperation
+from renewer.extensions import config
 
 
 @huey.retriable_task
@@ -38,3 +41,8 @@ def remove_old_certificate(session, operation_id):
     new_certificate.route = route
     session.add(new_certificate)
     session.commit()
+
+
+@huey.nonretriable_task
+def wait_for_cert_update(session, operation_id):
+    time.sleep(config.IAM_PROPOGATION_TIME)

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Union
 
 from botocore.exceptions import ClientError
 
@@ -7,8 +8,8 @@ from renewer.extensions import config
 from renewer.aws import iam_govcloud, iam_commercial
 from renewer.types import TOperation, TCertificate
 from renewer.route_type import RouteType
-from renewer.cdn_models import CdnOperation, CdnCertificate
-from renewer.domain_models import DomainOperation, DomainCertificate
+from renewer.cdn_models import CdnOperation, CdnCertificate, CdnRoute
+from renewer.domain_models import DomainOperation, DomainCertificate, DomainRoute
 
 
 @huey.retriable_task
@@ -67,3 +68,33 @@ def upload_certificate(session, operation_id: int, instance_type: RouteType):
 
     session.add(certificate)
     session.commit()
+
+
+@huey.retriable_task
+def delete_old_certificate(session, operation_id: int, instance_type: RouteType):
+    Operation: TOperation
+    Certificate: TCertificate
+
+    if instance_type is RouteType.ALB:
+        Operation = DomainOperation
+        Certificate = DomainCertificate
+        iam = iam_govcloud
+        iam_cert_prefix = config.GOVCLOUD_IAM_PREFIX
+    elif instance_type is RouteType.CDN:
+        Operation = CdnOperation
+        Certificate = CdnCertificate
+        iam = iam_commercial
+        iam_cert_prefix = config.COMMERCIAL_IAM_PREFIX
+
+    operation = session.query(Operation).get(operation_id)
+    new_certificate = operation.certificate
+    route = operation.route
+
+    old_certificate = route.certificates[1]
+
+    try:
+        iam.delete_server_certificate(
+            ServerCertificateName=old_certificate.iam_server_certificate_name
+        )
+    except iam.exceptions.NoSuchEntityException:
+        return

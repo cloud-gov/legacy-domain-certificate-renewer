@@ -1,6 +1,7 @@
 from renewer import huey
 from renewer.aws import cloudfront
-from renewer.cdn_models import CdnOperation
+from renewer.cdn_models import CdnOperation, CdnRoute
+from renewer.extensions import config
 
 
 @huey.retriable_task
@@ -21,3 +22,17 @@ def associate_certificate(session, operation_id):
 
     session.add(certificate)
     session.commit()
+
+
+@huey.retriable_task
+def wait_for_distribution(session, operation_id):
+    operation: CdnOperation = session.query(CdnOperation).get(operation_id)
+    route: CdnRoute = operation.route
+    waiter = cloudfront.get_waiter("distribution_deployed")
+    waiter.wait(
+        Id=route.dist_id,
+        WaiterConfig={
+            "Delay": config.AWS_POLL_WAIT_TIME_IN_SECONDS,
+            "MaxAttempts": config.AWS_POLL_MAX_ATTEMPTS,
+        },
+    )

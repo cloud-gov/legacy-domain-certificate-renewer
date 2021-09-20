@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 import json
 
 import pytest
@@ -11,6 +11,8 @@ from renewer.cdn_models import (
     CdnChallenge,
 )
 from renewer.tasks import cdn, iam, letsencrypt, s3
+
+from tests.lib.fake_iam import FakeIAM
 
 
 def test_create_acme_user_when_none_exists(
@@ -260,3 +262,116 @@ def test_associate_cert(clean_db, cdn_route: CdnRoute, immediate_huey, cloudfron
     cdn.associate_certificate(operation.id)
 
     clean_db.expunge_all()
+
+
+def test_waits_for_update_to_finish_updating(
+    clean_db, cdn_route: CdnRoute, immediate_huey, cloudfront
+):
+    operation = cdn_route.create_renewal_operation()
+
+    clean_db.add_all([operation])
+    clean_db.commit()
+
+    cloudfront.expect_get_distribution(
+        caller_reference=cdn_route.instance_id,
+        domains=cdn_route.domain_external_list(),
+        certificate_id="unimportant_for_this_test",
+        origin_hostname=cdn_route.origin,
+        distribution_id=cdn_route.dist_id,
+        status="InProgress",
+    )
+    cloudfront.expect_get_distribution(
+        caller_reference=cdn_route.instance_id,
+        domains=cdn_route.domain_external_list(),
+        certificate_id="unimportant_for_this_test",
+        origin_hostname=cdn_route.origin,
+        distribution_id=cdn_route.dist_id,
+        status="Deployed",
+    )
+
+    # what we're really testing.
+    # this test just makes sure we call get_distribution until it's Deployed
+    # and that nothing blows up
+    cdn.wait_for_distribution(operation.id)
+
+
+def test_delete_old_certificate(
+    clean_db, cdn_route: CdnRoute, iam_commercial: FakeIAM, immediate_huey
+):
+    operation = cdn_route.create_renewal_operation()
+    new_certificate = CdnCertificate()
+    new_certificate.route = cdn_route
+    new_certificate.expires = datetime.now() + timedelta(days=90)
+    old_certificate = CdnCertificate()
+    old_certificate.route = cdn_route
+    old_certificate.expires = datetime.now() + timedelta(days=30)
+    operation.certificate = new_certificate
+
+    today = date.today().isoformat()
+    old_certificate.iam_server_certificate_name = (
+        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+    )
+    old_certificate.iam_server_certificate_id = (
+        f"FAKE_CERT_ID-{cdn_route.instance_id}-OLD"
+    )
+    old_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
+    )
+
+    new_certificate.iam_server_certificate_name = (
+        f"{cdn_route.instance_id}-{today}-{new_certificate.id}"
+    )
+    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{cdn_route.instance_id}"
+    new_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, new_certificate, old_certificate, cdn_route])
+    clean_db.commit()
+
+    iam_commercial.expects_delete_server_certificate(
+        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+    )
+
+    iam.delete_old_certificate(operation.id, cdn_route.route_type)
+
+
+def test_delete_nonexistent_old_certificate(
+    clean_db, cdn_route: CdnRoute, iam_commercial: FakeIAM, immediate_huey
+):
+    operation = cdn_route.create_renewal_operation()
+    new_certificate = CdnCertificate()
+    new_certificate.route = cdn_route
+    new_certificate.expires = datetime.now() + timedelta(days=90)
+    old_certificate = CdnCertificate()
+    old_certificate.route = cdn_route
+    old_certificate.expires = datetime.now() + timedelta(days=30)
+    operation.certificate = new_certificate
+
+    today = date.today().isoformat()
+    old_certificate.iam_server_certificate_name = (
+        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+    )
+    old_certificate.iam_server_certificate_id = (
+        f"FAKE_CERT_ID-{cdn_route.instance_id}-OLD"
+    )
+    old_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
+    )
+
+    new_certificate.iam_server_certificate_name = (
+        f"{cdn_route.instance_id}-{today}-{new_certificate.id}"
+    )
+    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{cdn_route.instance_id}"
+    new_certificate.iam_server_certificate_arn = (
+        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
+    )
+
+    clean_db.add_all([operation, new_certificate, old_certificate, cdn_route])
+    clean_db.commit()
+
+    iam_commercial.expects_delete_server_certificate_returning_no_such_entity(
+        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+    )
+
+    iam.delete_old_certificate(operation.id, cdn_route.route_type)
