@@ -56,6 +56,14 @@ class AppConfig(Config):
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = self.env_parser(
             "AWS_GOVCLOUD_SECRET_ACCESS_KEY"
         )
+        # how long to wait between polling when using an boto3 waiter
+        # I _think_ we're best leaving this low and relying on huey retries so the worker(s) can think about other things
+        self.AWS_POLL_WAIT_TIME_IN_SECONDS = self.env_parser.int(
+            "AWS_POLL_WAIT_TIME_IN_SECONDS"
+        )
+        # how many times to poll when using a boto3 waiter
+        # I _think_ we're best leaving this low and relying on huey retries so the worker(s) can think about other things
+        self.AWS_POLL_MAX_ATTEMPTS = self.env_parser.int("AWS_POLL_MAX_ATTEMPTS")
         self.GOVCLOUD_BUCKET = self.env_parser("GOVCLOUD_BUCKET")
         self.GOVCLOUD_IAM_PREFIX = self.env_parser("GOVCLOUD_IAM_PREFIX")
 
@@ -79,6 +87,7 @@ class AppConfig(Config):
             "DOMAIN_DATABASE_ENCRYPTION_KEY"
         )
         self.S3_PROPAGATION_TIME = self.env_parser.int("S3_PROPAGATION_TIME", 10)
+        self.IAM_PROPAGATION_TIME = self.env_parser.int("IAM_PROPAGATION_TIME", 10)
 
 
 class LocalConfig(Config):
@@ -98,6 +107,8 @@ class LocalConfig(Config):
         self.AWS_GOVCLOUD_REGION = "us-gov-west-1"
         self.AWS_GOVCLOUD_ACCESS_KEY_ID = "ASIANOTAREALKEYGOV"
         self.AWS_GOVCLOUD_SECRET_ACCESS_KEY = "THIS_IS_A_FAKE_KEY_GOV"
+        self.AWS_POLL_WAIT_TIME_IN_SECONDS = 0
+        self.AWS_POLL_MAX_ATTEMPTS = 3
         self.GOVCLOUD_BUCKET = "fake-govcloud-bucket"
         self.GOVCLOUD_IAM_PREFIX = "/alb/test/"
 
@@ -111,6 +122,7 @@ class LocalConfig(Config):
         self.DOMAIN_DATABASE_ENCRYPTION_KEY = "feedabee"
         self.CDN_DATABASE_ENCRYPTION_KEY = "changeme"
         self.S3_PROPAGATION_TIME = 0
+        self.IAM_PROPAGATION_TIME = 0
 
 
 class UpgradeSchemaConfig(Config):

@@ -10,6 +10,7 @@ def cdn_route(clean_db):
     route.state = "provisioned"
     route.domain_external = "example.com,www.example.com"
     route.dist_id = "fakedistid"
+    route.origin = "cloudfront-origin.cf.local"
     clean_db.add(route)
     clean_db.commit()
     return route

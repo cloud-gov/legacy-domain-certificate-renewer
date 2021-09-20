@@ -100,6 +100,9 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("GOVCLOUD_BUCKET", "fake-govcloud-bucket")
     monkeypatch.setenv("GOVCLOUD_IAM_PREFIX", "/govcloud/certs")
     monkeypatch.setenv("S3_PROPAGATION_TIME", "5")
+    monkeypatch.setenv("IAM_PROPAGATION_TIME", "6")
+    monkeypatch.setenv("AWS_POLL_WAIT_TIME_IN_SECONDS", "30")
+    monkeypatch.setenv("AWS_POLL_MAX_ATTEMPTS", "10")
 
 
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
@@ -133,6 +136,9 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.CDN_DATABASE_ENCRYPTION_KEY is not None
     assert config.DOMAIN_DATABASE_ENCRYPTION_KEY is not None
     assert config.S3_PROPAGATION_TIME == 5
+    assert config.IAM_PROPAGATION_TIME == 6
+    assert config.AWS_POLL_WAIT_TIME_IN_SECONDS == 30
+    assert config.AWS_POLL_MAX_ATTEMPTS == 10
 
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions
