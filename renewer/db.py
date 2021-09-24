@@ -4,12 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from renewer.extensions import config
-from renewer.cdn_models import CdnBase
-from renewer.domain_models import DomainBase
+from renewer.models.cdn import CdnModel
+from renewer.models.domain import DomainModel
 
 cdn_engine = create_engine(config.CDN_BROKER_DATABASE_URI)
 domain_engine = create_engine(config.DOMAIN_BROKER_DATABASE_URI)
-Session = sessionmaker(binds={CdnBase: cdn_engine, DomainBase: domain_engine})
+Session = sessionmaker(binds={CdnModel: cdn_engine, DomainModel: domain_engine})
 
 
 def check_connections(

@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from renewer.domain_models import DomainAlbProxy, DomainRoute, DomainCertificate
+from renewer.models.domain import DomainAlbProxy, DomainRoute, DomainCertificate
 from renewer.tasks import migrations
 
 

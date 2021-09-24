@@ -2,11 +2,11 @@ import time
 from typing import Type, Union
 
 from renewer.aws import s3_commercial, s3_govcloud
-from renewer.cdn_models import CdnOperation, CdnChallenge, CdnCertificate
-from renewer.domain_models import DomainOperation, DomainChallenge, DomainCertificate
+from renewer.models.cdn import CdnOperation, CdnChallenge, CdnCertificate
+from renewer.models.domain import DomainOperation, DomainChallenge, DomainCertificate
 from renewer.extensions import config
 from renewer.huey import retriable_task
-from renewer.route_type import RouteType
+from renewer.models.common import RouteType
 
 
 TOperation = Type[Union[DomainOperation, CdnOperation]]

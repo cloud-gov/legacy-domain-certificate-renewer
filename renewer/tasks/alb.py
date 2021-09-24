@@ -2,7 +2,7 @@ import time
 
 from renewer import huey
 from renewer.aws import alb
-from renewer.domain_models import DomainOperation
+from renewer.models.domain import DomainOperation
 from renewer.extensions import config
 
 

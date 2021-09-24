@@ -11,14 +11,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from renewer.cdn_models import (
+from renewer.models.cdn import (
     CdnOperation,
     CdnAcmeUserV2,
     CdnCertificate,
     CdnRoute,
     CdnChallenge,
 )
-from renewer.domain_models import (
+from renewer.models.domain import (
     DomainOperation,
     DomainAcmeUserV2,
     DomainCertificate,
@@ -28,8 +28,14 @@ from renewer.domain_models import (
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
 from renewer import huey
-from renewer.types import TOperation, TCertificate, TChallenge, TUser, TRoute
-from renewer.route_type import RouteType
+from renewer.models.common import (
+    RouteType,
+    OperationModel,
+    RouteModel,
+    AcmeUserV2Model,
+    ChallengeModel,
+    CertificateModel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +73,8 @@ def http_challenge(order, domain):
 
 @huey.retriable_task
 def create_user(session, operation_id: int, route_type: RouteType):
-    Operation: TOperation
-    AcmeUserV2: TUser
+    Operation: OperationModel
+    AcmeUserV2: AcmeUserV2Model
     if route_type is RouteType.ALB:
         Operation = DomainOperation
         AcmeUserV2 = DomainAcmeUserV2
@@ -116,8 +122,8 @@ def create_user(session, operation_id: int, route_type: RouteType):
 
 @huey.retriable_task
 def create_private_key_and_csr(session, operation_id: int, instance_type: RouteType):
-    Operation: TOperation
-    Certificate: TCertificate
+    Operation: OperationModel
+    Certificate: CertificateModel
     if instance_type is RouteType.ALB:
         Operation = DomainOperation
         Certificate = DomainCertificate
@@ -158,8 +164,8 @@ def create_private_key_and_csr(session, operation_id: int, instance_type: RouteT
 
 @huey.retriable_task
 def initiate_challenges(session, operation_id: int, instance_type: RouteType):
-    Operation: TOperation
-    Challenge: TChallenge
+    Operation: OperationModel
+    Challenge: ChallengeModel
 
     if instance_type is RouteType.ALB:
         Operation = DomainOperation
@@ -215,8 +221,8 @@ def initiate_challenges(session, operation_id: int, instance_type: RouteType):
 
 @huey.retriable_task
 def answer_challenges(session, operation_id: int, instance_type: RouteType):
-    Operation: TOperation
-    Challenge: TChallenge
+    Operation: OperationModel
+    Challenge: ChallengeModel
 
     if instance_type is RouteType.ALB:
         Operation = DomainOperation
@@ -304,8 +310,8 @@ def retrieve_certificate(session, operation_id: int, instance_type: RouteType):
 
         return certs_normalized[0], "".join(certs_normalized[1:])
 
-    Operation: TOperation
-    Challenge: TChallenge
+    Operation: OperationModel
+    Challenge: ChallengeModel
 
     if instance_type is RouteType.ALB:
         Operation = DomainOperation

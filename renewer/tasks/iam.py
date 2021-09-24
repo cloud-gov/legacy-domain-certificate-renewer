@@ -6,16 +6,15 @@ from botocore.exceptions import ClientError
 from renewer import huey
 from renewer.extensions import config
 from renewer.aws import iam_govcloud, iam_commercial
-from renewer.types import TOperation, TCertificate
-from renewer.route_type import RouteType
-from renewer.cdn_models import CdnOperation, CdnCertificate, CdnRoute
-from renewer.domain_models import DomainOperation, DomainCertificate, DomainRoute
+from renewer.models.common import RouteType, OperationModel, CertificateModel
+from renewer.models.cdn import CdnOperation, CdnCertificate, CdnRoute
+from renewer.models.domain import DomainOperation, DomainCertificate, DomainRoute
 
 
 @huey.retriable_task
 def upload_certificate(session, operation_id: int, instance_type: RouteType):
-    Operation: TOperation
-    Certificate: TCertificate
+    Operation: OperationModel
+    Certificate: CertificateModel
 
     if instance_type is RouteType.ALB:
         Operation = DomainOperation
@@ -72,8 +71,8 @@ def upload_certificate(session, operation_id: int, instance_type: RouteType):
 
 @huey.retriable_task
 def delete_old_certificate(session, operation_id: int, instance_type: RouteType):
-    Operation: TOperation
-    Certificate: TCertificate
+    Operation: OperationModel
+    Certificate: CertificateModel
 
     if instance_type is RouteType.ALB:
         Operation = DomainOperation

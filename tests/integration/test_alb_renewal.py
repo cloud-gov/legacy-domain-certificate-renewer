@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from renewer.domain_models import (
+from renewer.models.domain import (
     DomainAlbProxy,
     DomainOperation,
     DomainRoute,

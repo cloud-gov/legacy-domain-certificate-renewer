@@ -1,6 +1,6 @@
 import pytest
 
-from renewer.domain_models import DomainAlbProxy, DomainRoute
+from renewer.models.domain import DomainAlbProxy, DomainRoute
 
 
 @pytest.fixture(scope="function")

@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum
 from typing import List
 
 import sqlalchemy as sa
@@ -11,11 +10,18 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
     StringEncryptedType,
 )
 
-from renewer.state import OperationState
 from renewer.action import Action
 from renewer.aws import alb, iam_govcloud
 from renewer.extensions import config
-from renewer.route_type import RouteType
+from renewer.models.common import (
+    RouteType,
+    RouteModel,
+    CertificateModel,
+    ChallengeModel,
+    AcmeUserV2Model,
+    OperationModel,
+    OperationState,
+)
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -26,20 +32,14 @@ convention = {
 }
 
 metadata = sa.MetaData(naming_convention=convention)
-DomainBase = declarative.declarative_base(metadata=metadata)
+DomainModel = declarative.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
     return config.DOMAIN_DATABASE_ENCRYPTION_KEY
 
 
-def find_active_instances(session):
-    domain_query = session.query(DomainRoute).filter(DomainRoute.state == "provisioned")
-    domain_routes = domain_query.all()
-    return domain_routes
-
-
-class DomainAlbProxy(DomainBase):
+class DomainAlbProxy(DomainModel):
     __tablename__ = "alb_proxies"
 
     alb_arn = sa.Column(sa.Text, primary_key=True)
@@ -47,7 +47,7 @@ class DomainAlbProxy(DomainBase):
     listener_arn = sa.Column(sa.Text)
 
 
-class DomainRoute(DomainBase):
+class DomainRoute(DomainModel, RouteModel):
     __tablename__ = "routes"
 
     instance_id = sa.Column("guid", sa.Text, primary_key=True)
@@ -77,10 +77,6 @@ class DomainRoute(DomainBase):
         """to match CdnRoute"""
         return self.domains
 
-    @property
-    def needs_renewal(self):
-        return all([c.needs_renewal for c in self.certificates])
-
     def backport_manual_certs(self):
         """
         We were for some time manually rotating certs without updating the database
@@ -101,19 +97,13 @@ class DomainRoute(DomainBase):
 
                     return DomainCertificate.create_cert_for_arn(arn, self)
 
-    def renew(self):
-        operation = self.create_renewal_operation()
-        sess = orm.object_session(self)
-        sess.add(operation)
-        sess.commit()
-
     def create_renewal_operation(self):
         operation = DomainOperation()
         operation.route = self
         return operation
 
 
-class DomainCertificate(DomainBase):
+class DomainCertificate(DomainModel, CertificateModel):
     __tablename__ = "certificates"
 
     id = sa.Column(sa.Integer, sa.Sequence("certificates_id_seq"), primary_key=True)
@@ -144,11 +134,6 @@ class DomainCertificate(DomainBase):
     iam_server_certificate_name = sa.Column(sa.Text)
     iam_server_certificate_arn = sa.Column(sa.Text)
 
-    @property
-    def needs_renewal(self):
-        now = datetime.datetime.now(datetime.timezone.utc)
-        return self.expires < now + datetime.timedelta(days=config.RENEW_BEFORE_DAYS)
-
     @classmethod
     def create_cert_for_arn(cls, arn, route):
         name = arn.split("/")[-1]
@@ -167,7 +152,7 @@ class DomainCertificate(DomainBase):
         return cert
 
 
-class DomainUserData(DomainBase):
+class DomainUserData(DomainModel):
     __tablename__ = "user_data"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -179,7 +164,7 @@ class DomainUserData(DomainBase):
     key = sa.Column(postgresql.BYTEA)
 
 
-class DomainOperation(DomainBase):
+class DomainOperation(DomainModel, OperationModel):
     __tablename__ = "operations"
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
@@ -205,7 +190,7 @@ class DomainOperation(DomainBase):
     )
 
 
-class DomainAcmeUserV2(DomainBase):
+class DomainAcmeUserV2(DomainModel, AcmeUserV2Model):
     __tablename__ = "acme_user_v2"
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
@@ -221,7 +206,7 @@ class DomainAcmeUserV2(DomainBase):
     )
 
 
-class DomainChallenge(DomainBase):
+class DomainChallenge(DomainModel, ChallengeModel):
     __tablename__ = "challenges"
     id = sa.Column(sa.Integer, primary_key=True)
     certificate_id = sa.Column(
