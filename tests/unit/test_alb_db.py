@@ -5,11 +5,10 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 
 from renewer import db
-from renewer.domain_models import (
+from renewer.models.domain import (
     DomainRoute,
     DomainAlbProxy,
     DomainCertificate,
-    find_active_instances,
     DomainOperation,
     DomainAcmeUserV2,
 )
@@ -75,7 +74,7 @@ def test_find_instances(clean_db):
         clean_db.add(domain_route)
     clean_db.commit()
     clean_db.close()
-    instances = find_active_instances(clean_db)
+    instances = DomainRoute.find_active_instances(clean_db)
     assert len(instances) == 1
     assert instances[0].state == "provisioned"
 
@@ -205,22 +204,6 @@ def test_backport_from_manual_renewal_ignores_existing(clean_db, alb, iam_govclo
     )
     assert cert.expires is not None
     assert cert.name == "cf-domains-renew-me-2021-01-01_12-34-56"
-
-
-def test_renew_creates_operation(clean_db):
-    route = DomainRoute()
-    route.state = "provisioned"
-    route.instance_id = "renew-me"
-    clean_db.add(route)
-    clean_db.commit()
-
-    route = clean_db.query(DomainRoute).filter_by(instance_id="renew-me").first()
-    route.renew()
-
-    operation = clean_db.query(DomainOperation).filter_by(route_guid="renew-me").first()
-    assert operation is not None
-    assert operation.route == route
-    assert operation.action == "renew"
 
 
 def test_stores_acmeuser_private_key_pem_encrypted(clean_db):

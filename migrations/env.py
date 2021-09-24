@@ -8,8 +8,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from renewer.extensions import config as renewer_config
-from renewer.cdn_models import CdnBase
-from renewer.domain_models import DomainBase
+from renewer.models.cdn import CdnModel
+from renewer.models.domain import DomainModel
 
 USE_TWOPHASE = False
 
@@ -38,7 +38,7 @@ db_names = config.get_main_option("databases")
 #       'engine1':mymodel.metadata1,
 #       'engine2':mymodel.metadata2
 # }
-target_metadata = {"cdn": CdnBase.metadata, "domain": DomainBase.metadata}
+target_metadata = {"cdn": CdnModel.metadata, "domain": DomainModel.metadata}
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

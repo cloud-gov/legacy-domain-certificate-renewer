@@ -1,6 +1,6 @@
 import pytest
 
-from renewer.cdn_models import CdnRoute
+from renewer.models.cdn import CdnRoute
 
 
 @pytest.fixture(scope="function")

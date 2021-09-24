@@ -1,6 +1,6 @@
 from renewer import huey
 from renewer.aws import cloudfront
-from renewer.cdn_models import CdnOperation, CdnRoute
+from renewer.models.cdn import CdnOperation, CdnRoute
 from renewer.extensions import config
 
 

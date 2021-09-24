@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from renewer.cdn_models import (
+from renewer.models.cdn import (
     CdnOperation,
     CdnRoute,
     CdnAcmeUserV2,

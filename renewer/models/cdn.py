@@ -13,8 +13,15 @@ from sqlalchemy_utils.types.encrypted.encrypted_type import (
 
 from renewer.action import Action
 from renewer.extensions import config
-from renewer.state import OperationState
-from renewer.route_type import RouteType
+from renewer.models.common import (
+    RouteType,
+    RouteModel,
+    CertificateModel,
+    OperationModel,
+    AcmeUserV2Model,
+    ChallengeModel,
+    OperationState,
+)
 
 convention = {
     "ix": "idx_%(column_0_label)s",
@@ -26,14 +33,14 @@ convention = {
 
 metadata = sa.MetaData(naming_convention=convention)
 
-CdnBase = declarative.declarative_base(metadata=metadata)
+CdnModel = declarative.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
     return config.CDN_DATABASE_ENCRYPTION_KEY
 
 
-class CdnUserData(CdnBase):
+class CdnUserData(CdnModel):
     """
     CdnUserData is about the Let's Encrypt user associated with a CdnRoute.
     We probably have no reason to ever think about this model in this project.
@@ -50,7 +57,7 @@ class CdnUserData(CdnBase):
     key = sa.Column(postgresql.BYTEA)
 
 
-class CdnRoute(CdnBase):
+class CdnRoute(CdnModel, RouteModel):
     """
     CdnRoute represents the core of the service instance
     """
@@ -92,19 +99,13 @@ class CdnRoute(CdnBase):
     def domain_external_list(self):
         return self.domain_external.split(",")
 
-    def renew(self):
-        operation = self.create_renewal_operation()
-        sess = orm.object_session(self)
-        sess.add(operation)
-        sess.commit()
-
     def create_renewal_operation(self):
         operation = CdnOperation()
         operation.route = self
         return operation
 
 
-class CdnCertificate(CdnBase):
+class CdnCertificate(CdnModel, CertificateModel):
     __tablename__ = "certificates"
 
     id = sa.Column(sa.Integer, primary_key=True)
@@ -134,7 +135,7 @@ class CdnCertificate(CdnBase):
     iam_server_certificate_arn = sa.Column(sa.Text)
 
 
-class CdnOperation(CdnBase):
+class CdnOperation(CdnModel, OperationModel):
     __tablename__ = "operations"
 
     id = sa.Column(sa.Integer, sa.Sequence("operations_id_seq"), primary_key=True)
@@ -159,7 +160,7 @@ class CdnOperation(CdnBase):
     )
 
 
-class CdnAcmeUserV2(CdnBase):
+class CdnAcmeUserV2(CdnModel, AcmeUserV2Model):
     __tablename__ = "acme_user_v2"
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
@@ -175,7 +176,7 @@ class CdnAcmeUserV2(CdnBase):
     )
 
 
-class CdnChallenge(CdnBase):
+class CdnChallenge(CdnModel, ChallengeModel):
     __tablename__ = "challenges"
     id = sa.Column(sa.Integer, primary_key=True)
     certificate_id = sa.Column(

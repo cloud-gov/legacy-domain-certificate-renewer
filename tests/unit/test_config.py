@@ -143,16 +143,16 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions
     import renewer.aws
-    import renewer.domain_models
-    import renewer.cdn_models
+    import renewer.models.domain
+    import renewer.models.cdn
     import renewer.huey
 
     def reload():
         # force a reload of these modules. Order is important
         importlib.reload(renewer.extensions)
         importlib.reload(renewer.aws)
-        importlib.reload(renewer.domain_models)
-        importlib.reload(renewer.cdn_models)
+        importlib.reload(renewer.models.domain)
+        importlib.reload(renewer.models.cdn)
         importlib.reload(renewer.huey)
 
     raised = None
@@ -185,15 +185,15 @@ def test_upgrade_config(monkeypatch, vcap_application, vcap_services):
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions
     import renewer.aws
-    import renewer.domain_models
-    import renewer.cdn_models
+    import renewer.models.domain
+    import renewer.models.cdn
 
     def reload():
         # force a reload of these modules. Order is important
         importlib.reload(renewer.extensions)
         importlib.reload(renewer.aws)
-        importlib.reload(renewer.domain_models)
-        importlib.reload(renewer.cdn_models)
+        importlib.reload(renewer.models.domain)
+        importlib.reload(renewer.models.cdn)
 
     # set up environment
     monkeypatch.setenv("VCAP_APPLICATION", vcap_application)
