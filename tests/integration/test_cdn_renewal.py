@@ -10,9 +10,10 @@ from renewer.models.cdn import (
     CdnCertificate,
     CdnChallenge,
 )
-from renewer.tasks import cdn, iam, letsencrypt, s3
+from renewer.tasks import cdn, iam, letsencrypt, s3, renewals
 
 from tests.lib.fake_iam import FakeIAM
+from tests.lib.cdn_fixtures import make_route, make_cert
 
 
 def test_create_acme_user_when_none_exists(
@@ -299,38 +300,19 @@ def test_delete_old_certificate(
     clean_db, cdn_route: CdnRoute, iam_commercial: FakeIAM, immediate_huey
 ):
     operation = cdn_route.create_renewal_operation()
-    new_certificate = CdnCertificate()
-    new_certificate.route = cdn_route
-    new_certificate.expires = datetime.now() + timedelta(days=90)
-    old_certificate = CdnCertificate()
-    old_certificate.route = cdn_route
-    old_certificate.expires = datetime.now() + timedelta(days=30)
+    now = datetime.now()
+    today = date.today()
+    new_certificate = make_cert(clean_db, cdn_route, now + timedelta(days=90), today)
+    old_certificate = make_cert(
+        clean_db, cdn_route, now + timedelta(days=30), today - timedelta(days=60)
+    )
     operation.certificate = new_certificate
-
-    today = date.today().isoformat()
-    old_certificate.iam_server_certificate_name = (
-        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
-    )
-    old_certificate.iam_server_certificate_id = (
-        f"FAKE_CERT_ID-{cdn_route.instance_id}-OLD"
-    )
-    old_certificate.iam_server_certificate_arn = (
-        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
-    )
-
-    new_certificate.iam_server_certificate_name = (
-        f"{cdn_route.instance_id}-{today}-{new_certificate.id}"
-    )
-    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{cdn_route.instance_id}"
-    new_certificate.iam_server_certificate_arn = (
-        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
-    )
 
     clean_db.add_all([operation, new_certificate, old_certificate, cdn_route])
     clean_db.commit()
 
     iam_commercial.expects_delete_server_certificate(
-        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+        f"{cdn_route.instance_id}-{today - timedelta(days=60)}-{old_certificate.id}"
     )
 
     iam.delete_old_certificate(operation.id, cdn_route.route_type)
@@ -340,38 +322,64 @@ def test_delete_nonexistent_old_certificate(
     clean_db, cdn_route: CdnRoute, iam_commercial: FakeIAM, immediate_huey
 ):
     operation = cdn_route.create_renewal_operation()
-    new_certificate = CdnCertificate()
-    new_certificate.route = cdn_route
-    new_certificate.expires = datetime.now() + timedelta(days=90)
-    old_certificate = CdnCertificate()
-    old_certificate.route = cdn_route
-    old_certificate.expires = datetime.now() + timedelta(days=30)
+    now = datetime.now()
+    today = date.today()
+    new_certificate = make_cert(clean_db, cdn_route, now + timedelta(days=90), today)
+    old_certificate = make_cert(
+        clean_db, cdn_route, now + timedelta(days=30), today - timedelta(days=60)
+    )
     operation.certificate = new_certificate
-
-    today = date.today().isoformat()
-    old_certificate.iam_server_certificate_name = (
-        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
-    )
-    old_certificate.iam_server_certificate_id = (
-        f"FAKE_CERT_ID-{cdn_route.instance_id}-OLD"
-    )
-    old_certificate.iam_server_certificate_arn = (
-        f"arn:aws:iam:1234:/alb/test/{old_certificate.iam_server_certificate_name}"
-    )
-
-    new_certificate.iam_server_certificate_name = (
-        f"{cdn_route.instance_id}-{today}-{new_certificate.id}"
-    )
-    new_certificate.iam_server_certificate_id = f"FAKE_CERT_ID-{cdn_route.instance_id}"
-    new_certificate.iam_server_certificate_arn = (
-        f"arn:aws:iam:1234:/alb/test/{new_certificate.iam_server_certificate_name}"
-    )
 
     clean_db.add_all([operation, new_certificate, old_certificate, cdn_route])
     clean_db.commit()
 
     iam_commercial.expects_delete_server_certificate_returning_no_such_entity(
-        f"{cdn_route.instance_id}-{today}-{old_certificate.id}"
+        f"{cdn_route.instance_id}-{today - timedelta(days=60)}-{old_certificate.id}"
     )
 
     iam.delete_old_certificate(operation.id, cdn_route.route_type)
+
+
+def test_queues_all_renewals(clean_db, clean_huey, tasks):
+    now = datetime.now()
+    today = date.today()
+    needs_renewal = make_route(clean_db, "needs-renewal", "example.com")
+    needs_renewal_cert = make_cert(
+        clean_db, needs_renewal, now + timedelta(days=1), today - timedelta(days=60)
+    )
+
+    doesnt_need_renewal = make_route(clean_db, "doesnt-need-renewal", "example.com")
+    doesnt_need_renewal_cert = make_cert(
+        clean_db,
+        doesnt_need_renewal,
+        now + timedelta(days=32),
+        today - timedelta(days=60),
+    )
+
+    inactive = make_route(clean_db, "inactive", "example.com", "deprovisioned")
+    inactive_cert = make_cert(
+        clean_db, inactive, now + timedelta(days=30), today - timedelta(days=60)
+    )
+    clean_db.add_all(
+        [
+            needs_renewal,
+            needs_renewal_cert,
+            doesnt_need_renewal,
+            doesnt_need_renewal_cert,
+            inactive,
+            inactive_cert,
+        ]
+    )
+    clean_db.commit()
+
+    renewals.renew_all_certs()
+    tasks.run_queued_tasks_and_enqueue_dependents()
+    needs_renewal = clean_db.query(CdnRoute).get(needs_renewal.id)
+    ops = needs_renewal.operations
+    inactive = clean_db.query(CdnRoute).get(inactive.id)
+    doesnt_need_renewal = clean_db.query(CdnRoute).get(doesnt_need_renewal.id)
+    task = clean_huey.dequeue()
+
+    assert len(doesnt_need_renewal.operations.all()) == 0
+    assert len(inactive.operations.all()) == 0
+    assert task.args[0] == ops[0].id
