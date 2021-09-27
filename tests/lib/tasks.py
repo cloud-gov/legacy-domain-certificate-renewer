@@ -19,15 +19,28 @@ def stop_task_from_retrying(signal, task):
 
 
 @pytest.fixture(scope="function")
-def immediate_huey():
+def clean_huey():
+    # a huey with an empty task queue that validates the task queue is empty at the end of the test
+    # used alone, the intent is to either add tasks to huey and step through them, or add tasks
+    # and make assertions about what tasks are enqueued
+    try:
+        huey.storage.flush_all()
+        yield huey
+    finally:
+        assert huey.pending_count() == 0
+
+
+@pytest.fixture(scope="function")
+def immediate_huey(clean_huey):
     # put huey into immediate mode. This is good for tests where you
     # don't want to step through tasks, and just want huey to run through them
     # synchronously
+    old_immediate = clean_huey.immediate
     try:
-        huey.immediate = True
-        yield huey
+        clean_huey.immediate = True
+        yield clean_huey
     finally:
-        huey.immediate = False
+        clean_huey.immediate = old_immediate
 
 
 def _emit_without_exception_catching(self, signal, task, *args, **kwargs):

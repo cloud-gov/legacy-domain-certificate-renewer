@@ -7,7 +7,7 @@ from tests.lib.fake_alb import alb
 from tests.lib.fake_cloudfront import cloudfront
 from tests.lib.fake_iam import iam_commercial, iam_govcloud
 from tests.lib.fake_s3 import s3_commercial, s3_govcloud
-from tests.lib.tasks import tasks, immediate_huey
+from tests.lib.tasks import tasks, clean_huey, immediate_huey
 
 
 def pytest_configure(config):
