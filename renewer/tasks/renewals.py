@@ -22,7 +22,7 @@ def queue_all_tasks(route, session):
     if isinstance(route, DomainRoute):
         get_renewal_pipeline = get_domain_renewal_pipeline
     elif isinstance(route, CdnRoute):
-        get_renewal_pipeline = get_domain_renewal_pipeline
+        get_renewal_pipeline = get_cdn_renewal_pipeline
     else:
         raise NotImplementedError(
             f"Expected one of DomainRoute, CdnRoute, got {type(route)}"
