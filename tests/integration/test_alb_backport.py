@@ -32,7 +32,8 @@ def test_backport_all_certs(clean_db, alb, iam_govcloud, immediate_huey):
         "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-03-12_12-34-12",
     )
     iam_govcloud.expect_get_server_certificate(
-        "cf-domains-renew-me-2021-03-12_12-34-12", "2021-03-12T12:34:12Z"
+        "cf-domains-renew-me-2021-03-12_12-34-12",
+        datetime.strptime("2021-03-12T12:34:12Z", "%Y-%m-%dT%H:%M:%SZ"),
     )
     clean_db.expunge_all()
 

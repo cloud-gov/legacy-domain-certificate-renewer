@@ -63,7 +63,9 @@ class FakeIAM(FakeAWS):
             expected_params={"ServerCertificateName": name},
         )
 
-    def expect_get_server_certificate(self, name, expiration, path=None):
+    def expect_get_server_certificate(
+        self, name: str, expiration: datetime, path: str = None
+    ):
         if path is None:
             path = "/"
         response = {
@@ -73,7 +75,9 @@ class FakeIAM(FakeAWS):
                     "ServerCertificateName": name,
                     "ServerCertificateId": "this-needs-to-be-sixteen-digits",
                     "Arn": f"arn:aws:iam:123456:{path}{name}",
-                    "UploadDate": "2021-08-05T16:49:16Z",
+                    "UploadDate": datetime.strptime(
+                        "2021-08-05T16:49:16Z", "%Y-%m-%dT%H:%M:%SZ"
+                    ),
                     "Expiration": expiration,
                 },
                 "CertificateBody": "string",

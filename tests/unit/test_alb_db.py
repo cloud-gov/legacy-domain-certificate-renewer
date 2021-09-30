@@ -147,7 +147,8 @@ def test_backport_from_manual_renewal(clean_db, alb, iam_govcloud):
         "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-03-12_12-34-12",
     )
     iam_govcloud.expect_get_server_certificate(
-        "cf-domains-renew-me-2021-03-12_12-34-12", "2021-03-12T12:34:12Z"
+        "cf-domains-renew-me-2021-03-12_12-34-12",
+        datetime.strptime("2021-03-12T12:34:12Z", "%Y-%m-%dT%H:%M:%SZ"),
     )
 
     cert = route.backport_manual_certs()

@@ -140,7 +140,6 @@ class DomainCertificate(DomainModel, CertificateModel):
         data = iam_govcloud.get_server_certificate(ServerCertificateName=name)
         data = data["ServerCertificate"]
         expires = data["ServerCertificateMetadata"]["Expiration"]
-        expires = datetime.datetime.strptime(expires, "%Y-%m-%dT%H:%M:%SZ")
 
         cert = DomainCertificate()
         cert.route = route
