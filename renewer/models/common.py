@@ -5,7 +5,7 @@ from typing import Union, Type
 from renewer.extensions import config
 
 
-class RouteType(Enum):
+class RouteType(str, Enum):
     CDN = "cdn"
     ALB = "alb"
 

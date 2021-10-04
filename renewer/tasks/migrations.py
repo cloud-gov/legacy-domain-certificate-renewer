@@ -3,6 +3,7 @@ import logging
 from huey import crontab
 
 from renewer.db import SessionHandler
+from renewer.json_log import json_log
 from renewer.models.domain import DomainRoute
 from renewer import huey
 
@@ -18,10 +19,12 @@ def backport_all_manual_certs():
 
 @huey.nonretriable_task
 def backport_cert(session, instance_id):
-    logger.info(f"backporting cert for {instance_id}")
+    json_log(logger.info, {"instance_id": instance_id, "message": "backporting cert"})
     instance = session.query(DomainRoute).get(instance_id)
     cert = instance.backport_manual_certs()
     if cert is not None:
         session.add(cert)
         session.commit()
-        logger.info(f"backported cert for {instance_id}")
+        json_log(
+            logger.info, {"instance_id": instance_id, "message": "backported cert"}
+        )

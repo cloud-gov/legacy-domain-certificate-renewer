@@ -1,10 +1,15 @@
+import logging
+
 from huey import crontab
 
 from renewer.models.cdn import CdnRoute
 from renewer.db import SessionHandler
+from renewer.json_log import json_log
 from renewer.models.domain import DomainRoute
 from renewer.huey import huey
 from renewer.tasks import alb, cdn, iam, letsencrypt, s3
+
+logger = logging.getLogger(__name__)
 
 
 @huey.periodic_task(crontab(month="*", day="*", hour="12", minute="0"))
@@ -19,6 +24,14 @@ def renew_all_certs():
 
 
 def queue_all_tasks(route, session):
+    json_log(
+        logger.info,
+        {
+            "instance_id": route.instance_id,
+            "type": route.route_type,
+            "message": "queuing renewal",
+        },
+    )
     if isinstance(route, DomainRoute):
         get_renewal_pipeline = get_domain_renewal_pipeline
     elif isinstance(route, CdnRoute):
