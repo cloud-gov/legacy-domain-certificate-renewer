@@ -27,6 +27,7 @@ from renewer.models.domain import (
 )
 from renewer.extensions import config
 from renewer.acme_client import AcmeClient
+from renewer.json_log import json_log
 from renewer import huey
 from renewer.models.common import (
     RouteType,
@@ -84,6 +85,14 @@ def create_user(session, operation_id: int, route_type: RouteType):
 
     operation = session.query(Operation).get(operation_id)
     route = operation.route
+    json_log(
+        logger.info,
+        {
+            "instance_id": route.instance_id,
+            "type": route_type,
+            "message": "creating user",
+        },
+    )
     acme_user = AcmeUserV2()
     if route.acme_user_id is not None:
         return
@@ -132,6 +141,14 @@ def create_private_key_and_csr(session, operation_id: int, instance_type: RouteT
         Certificate = CdnCertificate
 
     operation = session.query(Operation).get(operation_id)
+    json_log(
+        logger.info,
+        {
+            "instance_id": operation.route.instance_id,
+            "type": instance_type,
+            "message": "creating key and csr",
+        },
+    )
     if operation.certificate is None:
         # note: we're not linking the cert to the route yet. This is intentional
         # we're going to link them together once we actually have a certificate
@@ -175,6 +192,14 @@ def initiate_challenges(session, operation_id: int, instance_type: RouteType):
         Challenge = CdnChallenge
 
     operation = session.query(Operation).get(operation_id)
+    json_log(
+        logger.info,
+        {
+            "instance_id": operation.route.instance_id,
+            "type": instance_type,
+            "message": "initiating challenges",
+        },
+    )
     certificate = operation.certificate
     route = operation.route
     acme_user = route.acme_user
@@ -233,6 +258,14 @@ def answer_challenges(session, operation_id: int, instance_type: RouteType):
 
     operation = session.query(Operation).get(operation_id)
     route = operation.route
+    json_log(
+        logger.info,
+        {
+            "instance_id": route.instance_id,
+            "type": instance_type,
+            "message": "answering challenges",
+        },
+    )
     acme_user = route.acme_user
     certificate = operation.certificate
     challenges = certificate.challenges.all()
@@ -275,8 +308,14 @@ def answer_challenges(session, operation_id: int, instance_type: RouteType):
         if response.body.error is not None:
             # log the error for now. We haven't reproduced this locally, so we can't act on it yet
             # but it would be interesting in the real world
-            logger.error(
-                f"challenge for instance {route.id} errored. Error: {response.body.error}"
+            json_log(
+                logger.error,
+                {
+                    "instance_id": route.instance_id,
+                    "type": route.route_type,
+                    "error": response.body.error,
+                    "message": "challenge errored",
+                },
             )
         challenge.answered = True
         session.add(challenge)
@@ -322,6 +361,14 @@ def retrieve_certificate(session, operation_id: int, instance_type: RouteType):
 
     operation = session.query(Operation).get(operation_id)
     route = operation.route
+    json_log(
+        logger.info,
+        {
+            "instance_id": route.instance_id,
+            "type": instance_type,
+            "message": "retrieving certificate",
+        },
+    )
     acme_user = route.acme_user
     certificate = operation.certificate
 
@@ -364,14 +411,25 @@ def retrieve_certificate(session, operation_id: int, instance_type: RouteType):
                     order, deadline
                 )
         else:
-            logger.error(
-                f"failed to retrieve certificate for {route.domain_names} with code {e.code}, {e.description}, {e.detail}"
+            json_log(
+                logger.error,
+                {
+                    "instance_id": route.instance_id,
+                    "domains": route.domain_external_list(),
+                    "message": f"failed to retrieve certificate: {e.code}, {e.description}, {e.error}",
+                },
             )
             raise e
     except errors.ValidationError as e:
-        logger.error(
-            f"failed to retrieve certificate for {route.domain_names} with errors {e.failed_authzrs}"
+        json_log(
+            logger.error,
+            {
+                "instance_id": route.instance_id,
+                "domains": route.domain_external_list(),
+                "message": f"failed to retrieve certificate: {e.failed_authzrs}",
+            },
         )
+        raise e
         # if we fail validation, nuke the cert record and its challenges.
         # this way, when we retry from the beginning, we won't try to reuse them
         # the bad new is that we'll still retry this task a bunch of times before the pipeline fails
