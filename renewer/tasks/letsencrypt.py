@@ -304,7 +304,6 @@ def answer_challenges(session, operation_id: int, instance_type: RouteType):
         challenge_response = challenge_body.response(wrapped_account_key)
         # Let the CA server know that we are ready for the challenge.
         response = client_acme.answer_challenge(challenge_body, challenge_response)
-        print(response)
         if response.body.error is not None:
             # log the error for now. We haven't reproduced this locally, so we can't act on it yet
             # but it would be interesting in the real world
