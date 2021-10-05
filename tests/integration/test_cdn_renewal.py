@@ -260,7 +260,7 @@ def test_associate_cert(clean_db, cdn_route: CdnRoute, immediate_huey, cloudfron
         bucket_prefix="4321/",
     )
 
-    cdn.associate_certificate(operation.id)
+    cdn.associate_certificate(operation.id, cdn_route.route_type)
 
     clean_db.expunge_all()
 
@@ -293,7 +293,7 @@ def test_waits_for_update_to_finish_updating(
     # what we're really testing.
     # this test just makes sure we call get_distribution until it's Deployed
     # and that nothing blows up
-    cdn.wait_for_distribution(operation.id)
+    cdn.wait_for_distribution(operation.id, cdn_route.route_type)
 
 
 def test_delete_old_certificate(

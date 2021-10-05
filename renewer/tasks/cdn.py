@@ -5,13 +5,20 @@ from renewer.aws import cloudfront
 from renewer.json_log import json_log
 from renewer.models.cdn import CdnOperation, CdnRoute
 from renewer.extensions import config
+from renewer.models.common import RouteType
 
 
 logger = logging.getLogger(__name__)
 
 
+def raise_for_type(route_type: RouteType):
+    if route_type is not RouteType.CDN:
+        raise RuntimeError("running CDN task against non-CDN route type")
+
+
 @huey.retriable_task
-def associate_certificate(session, operation_id):
+def associate_certificate(session, operation_id: int, route_type: RouteType):
+    raise_for_type(route_type)
     operation = session.query(CdnOperation).get(operation_id)
     certificate = operation.certificate
     route = operation.route
@@ -39,7 +46,8 @@ def associate_certificate(session, operation_id):
 
 
 @huey.retriable_task
-def wait_for_distribution(session, operation_id):
+def wait_for_distribution(session, operation_id: int, route_type: RouteType):
+    raise_for_type(route_type)
     operation: CdnOperation = session.query(CdnOperation).get(operation_id)
     route: CdnRoute = operation.route
     json_log(

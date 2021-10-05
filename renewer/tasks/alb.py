@@ -6,12 +6,19 @@ from renewer.aws import alb
 from renewer.json_log import json_log
 from renewer.models.domain import DomainOperation
 from renewer.extensions import config
+from renewer.models.common import RouteType
 
 logger = logging.getLogger(__name__)
 
 
+def raise_for_type(route_type: RouteType):
+    if route_type is not RouteType.ALB:
+        raise RuntimeError("running ALB task against non-ALB route type")
+
+
 @huey.retriable_task
-def associate_certificate(session, operation_id):
+def associate_certificate(session, operation_id: int, route_type: RouteType):
+    raise_for_type(route_type)
     operation = session.query(DomainOperation).get(operation_id)
     certificate = operation.certificate
     route = operation.route
@@ -31,7 +38,8 @@ def associate_certificate(session, operation_id):
 
 
 @huey.retriable_task
-def remove_old_certificate(session, operation_id):
+def remove_old_certificate(session, operation_id: int, route_type: RouteType):
+    raise_for_type(route_type)
     operation = session.query(DomainOperation).get(operation_id)
     new_certificate = operation.certificate
     route = operation.route
@@ -62,5 +70,6 @@ def remove_old_certificate(session, operation_id):
 
 
 @huey.nonretriable_task
-def wait_for_cert_update(session, operation_id):
+def wait_for_cert_update(session, operation_id: int, route_type: RouteType):
+    raise_for_type(route_type)
     time.sleep(config.IAM_PROPOGATION_TIME)
