@@ -240,7 +240,7 @@ def test_associate_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
         "arn:aws:listener:1234", certificate.iam_server_certificate_arn
     )
 
-    alb_tasks.associate_certificate(operation.id)
+    alb_tasks.associate_certificate(operation.id, alb_route.route_type)
 
     clean_db.expunge_all()
 
@@ -265,9 +265,9 @@ def test_remove_old_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
         "arn:aws:listener:1234", old_certificate.iam_server_certificate_arn
     )
 
-    alb_tasks.remove_old_certificate(operation.id)
+    alb_tasks.remove_old_certificate(operation.id, alb_route.route_type)
     # run it twice, to make sure a retry won't nuke the good cert
-    alb_tasks.remove_old_certificate(operation.id)
+    alb_tasks.remove_old_certificate(operation.id, alb_route.route_type)
 
     clean_db.expunge_all()
 
