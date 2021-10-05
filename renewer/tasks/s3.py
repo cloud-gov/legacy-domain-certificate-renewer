@@ -31,6 +31,7 @@ def upload_challenge_files(session, operation_id, route_type):
         if not challenge.answered:
             path = challenge.validation_path
             if path[0] == "/":
+                # including the leading slash breaks these objects by causing a double-slash in the url
                 path = path[1:]
             s3.put_object(
                 Bucket=bucket,
