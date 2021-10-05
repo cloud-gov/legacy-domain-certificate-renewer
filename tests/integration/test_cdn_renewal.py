@@ -98,12 +98,12 @@ def test_uploads_challenge_files(
 
     s3_commercial.expect_put_object(
         "fake-commercial-bucket",
-        "/.well-known/acme-challenge/wwwchallengegoeshere",
+        ".well-known/acme-challenge/wwwchallengegoeshere",
         b"thisisthewwwchallenge",
     )
     s3_commercial.expect_put_object(
         "fake-commercial-bucket",
-        "/.well-known/acme-challenge/apexchallengegoeshere",
+        ".well-known/acme-challenge/apexchallengegoeshere",
         b"thisistheapexchallenge",
     )
 

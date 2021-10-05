@@ -29,10 +29,13 @@ def upload_challenge_files(session, operation_id, route_type):
     certificate = operation.certificate
     for challenge in certificate.challenges:
         if not challenge.answered:
+            path = challenge.validation_path
+            if path[0] == "/":
+                path = path[1:]
             s3.put_object(
                 Bucket=bucket,
                 Body=challenge.validation_contents.encode(),
-                Key=challenge.validation_path,
+                Key=path,
                 ServerSideEncryption="AES256",
             )
     # sleep to make sure the file will be in S3 when we want it
