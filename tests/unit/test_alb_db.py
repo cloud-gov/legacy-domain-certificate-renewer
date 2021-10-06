@@ -159,11 +159,11 @@ def test_backport_from_manual_renewal(clean_db, alb, iam_govcloud):
     route = clean_db.query(DomainRoute).filter_by(instance_id="renew-me").first()
     cert = route.certificates[0]
     assert (
-        cert.arn
+        cert.iam_server_certificate_arn
         == "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-03-12_12-34-12"
     )
     assert cert.expires is not None
-    assert cert.name == "cf-domains-renew-me-2021-03-12_12-34-12"
+    assert cert.iam_server_certificate_name == "cf-domains-renew-me-2021-03-12_12-34-12"
 
 
 def test_backport_from_manual_renewal_ignores_existing(clean_db, alb, iam_govcloud):
@@ -179,8 +179,8 @@ def test_backport_from_manual_renewal_ignores_existing(clean_db, alb, iam_govclo
     old_cert = DomainCertificate()
     old_cert.route = route
     old_cert.expires = datetime(year=2021, month=2, day=1, hour=0, minute=0, second=0)
-    old_cert.arn = "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-01-01_12-34-56"
-    old_cert.name = "cf-domains-renew-me-2021-01-01_12-34-56"
+    old_cert.iam_server_certificate_arn = "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-01-01_12-34-56"
+    old_cert.iam_server_certificate_name = "cf-domains-renew-me-2021-01-01_12-34-56"
     clean_db.add(proxy)
     clean_db.add(route)
     clean_db.add(old_cert)
@@ -200,11 +200,11 @@ def test_backport_from_manual_renewal_ignores_existing(clean_db, alb, iam_govclo
     route = clean_db.query(DomainRoute).filter_by(instance_id="renew-me").first()
     cert = route.certificates[0]
     assert (
-        cert.arn
+        cert.iam_server_certificate_arn
         == "arn:aws:iam:1234:server-certificate/domains/local/cf-domains-renew-me-2021-01-01_12-34-56"
     )
     assert cert.expires is not None
-    assert cert.name == "cf-domains-renew-me-2021-01-01_12-34-56"
+    assert cert.iam_server_certificate_name == "cf-domains-renew-me-2021-01-01_12-34-56"
 
 
 def test_stores_acmeuser_private_key_pem_encrypted(clean_db):

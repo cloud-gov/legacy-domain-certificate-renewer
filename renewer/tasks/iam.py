@@ -109,6 +109,17 @@ def delete_old_certificate(session, operation_id: int, instance_type: RouteType)
         },
     )
 
+    if old_certificate.iam_server_certificate_name is None:
+        json_log(
+            logger.warning,
+            {
+                "instance_id": route.instance_id,
+                "message": "not deleting certificate with unknown name",
+                "certificate_id": old_certificate.id,
+            },
+        )
+        return
+
     try:
         iam.delete_server_certificate(
             ServerCertificateName=old_certificate.iam_server_certificate_name
