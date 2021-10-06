@@ -272,6 +272,51 @@ def test_remove_old_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
     clean_db.expunge_all()
 
 
+def test_remove_old_cert_without_arn(
+    clean_db, alb_route: DomainRoute, immediate_huey, alb
+):
+    operation = alb_route.create_renewal_operation()
+    now = datetime.now()
+    today = date.today()
+    new_certificate = make_cert(
+        clean_db, alb_route, now + timedelta(days=90), today, False
+    )
+    old_certificate = make_cert(
+        clean_db, alb_route, now + timedelta(days=30), today - timedelta(days=60)
+    )
+    old_certificate.route = alb_route
+    old_certificate.iam_server_certificate_arn = None
+    old_certificate.iam_server_certificate_name = None
+    operation.certificate = new_certificate
+
+    clean_db.add_all([operation, new_certificate, old_certificate, alb_route])
+    clean_db.commit()
+
+    alb_tasks.remove_old_certificate(operation.id, alb_route.route_type)
+
+    clean_db.expunge_all()
+
+
+def test_delete_old_certificate_without_name(
+    clean_db, alb_route: DomainRoute, iam_govcloud: FakeIAM, immediate_huey
+):
+    operation = alb_route.create_renewal_operation()
+    now = datetime.now()
+    today = date.today()
+    new_certificate = make_cert(clean_db, alb_route, now + timedelta(days=90), today)
+    old_certificate = make_cert(
+        clean_db, alb_route, now + timedelta(days=30), today - timedelta(days=60)
+    )
+    old_certificate.iam_server_certificate_arn = None
+    old_certificate.iam_server_certificate_name = None
+    operation.certificate = new_certificate
+
+    clean_db.add_all([operation, new_certificate, old_certificate, alb_route])
+    clean_db.commit()
+
+    iam.delete_old_certificate(operation.id, alb_route.route_type)
+
+
 def test_delete_old_certificate(
     clean_db, alb_route: DomainRoute, iam_govcloud: FakeIAM, immediate_huey
 ):

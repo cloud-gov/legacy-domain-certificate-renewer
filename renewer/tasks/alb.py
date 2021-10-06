@@ -52,6 +52,16 @@ def remove_old_certificate(session, operation_id: int, route_type: RouteType):
             "message": f"removing certificate on alb proxy {route_alb.listener_arn}. Old certificate id: {old_certificate.id}",
         },
     )
+    if old_certificate.iam_server_certificate_arn is None:
+        json_log(
+            logger.warning,
+            {
+                "instance_id": route.instance_id,
+                "message": "skipping certificate without known arn",
+                "certificate_id": old_certificate.id,
+            },
+        )
+        return
 
     if (
         old_certificate.iam_server_certificate_arn

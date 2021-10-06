@@ -91,7 +91,9 @@ class DomainRoute(DomainModel, RouteModel):
                 if self.instance_id in cert["CertificateArn"]:
                     arn = cert["CertificateArn"]
 
-                    if any(c.arn == arn for c in self.certificates):
+                    if any(
+                        c.iam_server_certificate_arn == arn for c in self.certificates
+                    ):
                         # we already know about this one
                         continue
 
@@ -117,8 +119,6 @@ class DomainCertificate(DomainModel, CertificateModel):
     # certificate is the actual body of the certificate chain
     # this was used by the old broker, but the renewer uses fullchain_pem and leaf_pem instead
     certificate = sa.Column(postgresql.BYTEA)
-    arn = sa.Column(sa.Text)
-    name = sa.Column(sa.Text)
     expires = sa.Column(postgresql.TIMESTAMP, index=True)
     private_key_pem: str = sa.Column(
         StringEncryptedType(sa.Text, db_encryption_key, AesGcmEngine, "pkcs5")
@@ -144,9 +144,9 @@ class DomainCertificate(DomainModel, CertificateModel):
         cert = DomainCertificate()
         cert.route = route
         cert.created_at = datetime.datetime.now()
-        cert.arn = arn
+        cert.iam_server_certificate_arn = arn
         cert.expires = expires
-        cert.name = name
+        cert.iam_server_certificate_name = name
 
         return cert
 
