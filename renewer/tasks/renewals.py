@@ -65,7 +65,7 @@ def get_domain_renewal_pipeline(alb_route: DomainRoute, session):
         .then(alb.associate_certificate, operation.id, alb_route.route_type)
         .then(alb.remove_old_certificate, operation.id, alb_route.route_type)
         .then(alb.wait_for_cert_update, operation.id, alb_route.route_type)
-        .then(iam.delete_old_certificate)
+        .then(iam.delete_old_certificate, operation.id, alb_route.route_type)
     )
     return pipeline
 
@@ -86,6 +86,6 @@ def get_cdn_renewal_pipeline(cdn_route: CdnRoute, session):
         .then(iam.upload_certificate, operation.id, cdn_route.route_type)
         .then(cdn.associate_certificate, operation.id, cdn_route.route_type)
         .then(cdn.wait_for_distribution, operation.id, cdn_route.route_type)
-        .then(iam.delete_old_certificate)
+        .then(iam.delete_old_certificate, operation.id, cdn_route.route_type)
     )
     return pipeline
