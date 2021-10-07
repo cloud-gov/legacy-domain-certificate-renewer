@@ -103,6 +103,8 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("IAM_PROPAGATION_TIME", "6")
     monkeypatch.setenv("AWS_POLL_WAIT_TIME_IN_SECONDS", "30")
     monkeypatch.setenv("AWS_POLL_MAX_ATTEMPTS", "10")
+    monkeypatch.setenv("RUN_RENEWALS", "true")
+    monkeypatch.setenv("RUN_BACKPORTS", "true")
 
 
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
@@ -139,6 +141,8 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.IAM_PROPAGATION_TIME == 6
     assert config.AWS_POLL_WAIT_TIME_IN_SECONDS == 30
     assert config.AWS_POLL_MAX_ATTEMPTS == 10
+    assert config.RUN_RENEWALS
+    assert config.RUN_BACKPORTS
 
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions

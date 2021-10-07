@@ -3,6 +3,7 @@ import logging
 from huey import crontab
 
 from renewer.db import SessionHandler
+from renewer.extensions import config
 from renewer.json_log import json_log
 from renewer.models.domain import DomainRoute
 from renewer import huey
@@ -12,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 @huey.huey.periodic_task(crontab(month="*", day="*", hour="6", minute="0"))
 def backport_all_manual_certs():
+    if not config.RUN_BACKPORTS:
+        logger.info("skipping backports because of configuration")
+        return
     with SessionHandler() as session:
         for instance in DomainRoute.find_active_instances(session):
             backport_cert(instance.instance_id)

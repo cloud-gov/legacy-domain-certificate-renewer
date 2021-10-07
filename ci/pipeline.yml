@@ -208,6 +208,8 @@ jobs:
         LETS_ENCRYPT_REGISTRATION_EMAIL: ((lets_encrypt_registration_email))
         CDN_DATABASE_ENCRYPTION_KEY: ((staging-cdn-database-encryption-key))
         DOMAIN_DATABASE_ENCRYPTION_KEY: ((staging-domain-database-encryption-key))
+        RUN_RENEWALS: ((staging-run-renewals))
+        RUN_BACKPORTS: ((staging-run-backports))
   on_failure:
     put: slack
     params:
@@ -277,6 +279,8 @@ jobs:
         LETS_ENCRYPT_REGISTRATION_EMAIL: ((lets_encrypt_registration_email))
         CDN_DATABASE_ENCRYPTION_KEY: ((production-cdn-database-encryption-key))
         DOMAIN_DATABASE_ENCRYPTION_KEY: ((production-domain-database-encryption-key))
+        RUN_RENEWALS: ((production-run-renewals))
+        RUN_BACKPORTS: ((production-run-backports))
 
   on_failure:
     put: slack
