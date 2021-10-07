@@ -82,4 +82,4 @@ def remove_old_certificate(session, operation_id: int, route_type: RouteType):
 @huey.nonretriable_task
 def wait_for_cert_update(session, operation_id: int, route_type: RouteType):
     raise_for_type(route_type)
-    time.sleep(config.IAM_PROPOGATION_TIME)
+    time.sleep(config.IAM_PROPAGATION_TIME)
