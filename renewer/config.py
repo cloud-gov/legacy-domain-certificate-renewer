@@ -88,6 +88,8 @@ class AppConfig(Config):
         )
         self.S3_PROPAGATION_TIME = self.env_parser.int("S3_PROPAGATION_TIME", 10)
         self.IAM_PROPAGATION_TIME = self.env_parser.int("IAM_PROPAGATION_TIME", 10)
+        self.RUN_RENEWALS = self.env_parser.bool("RUN_RENEWALS", False)
+        self.RUN_BACKPORTS = self.env_parser.bool("RUN_BACKPORTS", False)
 
 
 class LocalConfig(Config):
@@ -123,6 +125,8 @@ class LocalConfig(Config):
         self.CDN_DATABASE_ENCRYPTION_KEY = "changeme"
         self.S3_PROPAGATION_TIME = 0
         self.IAM_PROPAGATION_TIME = 0
+        self.RUN_RENEWALS = True
+        self.RUN_BACKPORTS = True
 
 
 class UpgradeSchemaConfig(Config):

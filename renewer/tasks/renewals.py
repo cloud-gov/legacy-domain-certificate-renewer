@@ -4,6 +4,7 @@ from huey import crontab
 
 from renewer.models.cdn import CdnRoute
 from renewer.db import SessionHandler
+from renewer.extensions import config
 from renewer.json_log import json_log
 from renewer.models.domain import DomainRoute
 from renewer.huey import huey
@@ -14,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 @huey.periodic_task(crontab(month="*", day="*", hour="12", minute="0"))
 def renew_all_certs():
+    if not config.RUN_RENEWALS:
+        logger.info("skipping renewals because of configuration")
+        return
     routes = []
     with SessionHandler() as session:
         for Route in (CdnRoute, DomainRoute):
