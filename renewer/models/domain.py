@@ -201,7 +201,9 @@ class DomainAcmeUserV2(DomainModel, AcmeUserV2Model):
     registration_json = sa.Column(sa.Text)
 
     routes: List[DomainRoute] = orm.relation(
-        "DomainRoute", backref="acme_user", lazy="dynamic"
+        "DomainRoute",
+        backref="acme_user",
+        primaryjoin="(foreign(DomainRoute.acme_user_id)) == DomainAcmeUserV2.id",
     )
 
 
