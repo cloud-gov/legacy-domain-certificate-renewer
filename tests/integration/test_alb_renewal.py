@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 import json
+import uuid
 
 import pytest
 
@@ -17,6 +18,34 @@ from renewer.tasks import renewals
 
 from tests.lib.fake_iam import FakeIAM
 from tests.lib.alb_fixtures import make_cert, make_route
+
+
+def make_route_for_user(user, state: str = "provisioned"):
+    route = DomainRoute()
+    route.instance_id = uuid.uuid4()
+    route.acme_user = user
+    route.email = "me@example.com"
+    route.state = state
+    return route
+
+
+def test_create_acme_user_associates_exisiting_user(
+    clean_db, alb_route: DomainRoute, immediate_huey
+):
+    instance_id = alb_route.instance_id
+    operation = alb_route.create_renewal_operation()
+    user = DomainAcmeUserV2()
+    user.email = "me@example.com"
+    user.uri = "uri"
+    clean_db.add(alb_route)
+    clean_db.add(operation)
+    clean_db.add(user)
+    clean_db.commit()
+    letsencrypt.create_user(operation.id, alb_route.route_type)
+
+    alb_route = clean_db.query(DomainRoute).get(instance_id)
+
+    assert alb_route.acme_user_id == user.id
 
 
 def test_create_acme_user_when_none_exists(

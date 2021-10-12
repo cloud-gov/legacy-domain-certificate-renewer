@@ -93,36 +93,39 @@ def create_user(session, operation_id: int, route_type: RouteType):
             "message": "creating user",
         },
     )
-    acme_user = AcmeUserV2()
     if route.acme_user_id is not None:
         return
 
+    acme_user = AcmeUserV2.get_user(session)
+
+    if acme_user is None:
+        acme_user = AcmeUserV2()
+        key = josepy.JWKRSA(
+            key=rsa.generate_private_key(
+                public_exponent=65537, key_size=2048, backend=default_backend()
+            )
+        )
+        private_key_pem_in_binary = key.key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        acme_user.private_key_pem = private_key_pem_in_binary.decode("utf-8")
+
+        net = client.ClientNetwork(key, user_agent="cloud.gov legacy domain renewer")
+        directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
+        client_acme = AcmeClient(directory, net=net)
+
+        acme_user.email = config.LETS_ENCRYPT_REGISTRATION_EMAIL
+        registration = client_acme.new_account(
+            messages.NewRegistration.from_data(
+                email=acme_user.email, terms_of_service_agreed=True
+            )
+        )
+        acme_user.registration_json = registration.json_dumps()
+        acme_user.uri = registration.uri
+
     route.acme_user = acme_user
-
-    key = josepy.JWKRSA(
-        key=rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
-        )
-    )
-    private_key_pem_in_binary = key.key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-    acme_user.private_key_pem = private_key_pem_in_binary.decode("utf-8")
-
-    net = client.ClientNetwork(key, user_agent="cloud.gov legacy domain renewer")
-    directory = messages.Directory.from_json(net.get(config.ACME_DIRECTORY).json())
-    client_acme = AcmeClient(directory, net=net)
-
-    acme_user.email = config.LETS_ENCRYPT_REGISTRATION_EMAIL
-    registration = client_acme.new_account(
-        messages.NewRegistration.from_data(
-            email=acme_user.email, terms_of_service_agreed=True
-        )
-    )
-    acme_user.registration_json = registration.json_dumps()
-    acme_user.uri = registration.uri
     session.add(operation)
     session.add(route)
     session.add(acme_user)

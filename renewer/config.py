@@ -90,6 +90,7 @@ class AppConfig(Config):
         self.IAM_PROPAGATION_TIME = self.env_parser.int("IAM_PROPAGATION_TIME", 10)
         self.RUN_RENEWALS = self.env_parser.bool("RUN_RENEWALS", False)
         self.RUN_BACKPORTS = self.env_parser.bool("RUN_BACKPORTS", False)
+        self.MAX_ROUTES_PER_USER = 50
 
 
 class LocalConfig(Config):
@@ -127,6 +128,7 @@ class LocalConfig(Config):
         self.IAM_PROPAGATION_TIME = 0
         self.RUN_RENEWALS = True
         self.RUN_BACKPORTS = True
+        self.MAX_ROUTES_PER_USER = 3
 
 
 class UpgradeSchemaConfig(Config):

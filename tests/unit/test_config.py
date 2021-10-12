@@ -143,6 +143,7 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.AWS_POLL_MAX_ATTEMPTS == 10
     assert config.RUN_RENEWALS
     assert config.RUN_BACKPORTS
+    assert config.MAX_ROUTES_PER_USER == 50
 
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions

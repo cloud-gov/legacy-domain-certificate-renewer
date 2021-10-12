@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Union, Type
+from typing import Union, Type, List
 
 from renewer.extensions import config
 
@@ -40,7 +40,16 @@ class OperationModel:
 
 
 class AcmeUserV2Model:
-    pass
+    @classmethod
+    def get_user(cls, session):
+        users: List = session.query(cls).all()
+        users = sorted(users, key=lambda x: len(list(x.routes)))
+        if not len(users):
+            return None
+        lowest = users[0]
+        if len(lowest.routes) >= config.MAX_ROUTES_PER_USER:
+            return None
+        return lowest
 
 
 class ChallengeModel:
