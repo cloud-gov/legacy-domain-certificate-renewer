@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
+import uuid
+
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import orm
+
 from renewer import db
 from renewer.models.cdn import CdnRoute, CdnOperation, CdnAcmeUserV2, CdnCertificate
 from renewer import extensions
@@ -143,3 +146,64 @@ def test_need_renewal_basic(clean_db):
     # check if they need renewal
     assert needs_renewal_route.needs_renewal
     assert not doesnt_need_renewal_route.needs_renewal
+
+
+def test_get_user(clean_db):
+    """
+    setup:
+    - user0 has 1 active, 1 inactive route
+    - user1 has 2 active, 1 inactive route
+    expectation:
+    - user0 should be our user, because it has fewer routes
+    """
+
+    def make_route_for_user(user, state: str = "provisioned"):
+        route = CdnRoute()
+        route.instance_id = uuid.uuid4()
+        route.acme_user = user
+        route.email = "me@example.com"
+        route.state = state
+        return route
+
+    to_commit = []
+    user0 = CdnAcmeUserV2()
+    user0.email = "me@example.com"
+    user0.uri = "uri"
+    to_commit.append(user0)
+
+    user1 = CdnAcmeUserV2()
+    user1.email = "me@example.com"
+    user1.uri = "uri"
+    to_commit.append(user1)
+
+    to_commit.append(make_route_for_user(user0))
+
+    for _ in range(2):
+        to_commit.append(make_route_for_user(user1))
+
+    clean_db.add_all(to_commit)
+    clean_db.commit()
+
+    next_user = CdnAcmeUserV2.get_user(clean_db)
+    assert next_user.id == user0.id
+
+    # swap a route from user1 to user0
+    # now user0 has more, so user1 should be returned
+    route = user1.routes[0]
+    route.acme_user = user0
+    clean_db.add_all([user0, user1, route])
+    clean_db.commit()
+
+    next_user = CdnAcmeUserV2.get_user(clean_db)
+    assert next_user.id == user1.id
+
+    # now add routes to both users, making them both full
+    # we should get None, which indicates there are no users
+    # with few enough routes
+    to_commit[:] = []
+    to_commit.append(make_route_for_user(user0))
+    for _ in range(2):
+        to_commit.append(make_route_for_user(user1))
+    clean_db.add_all(to_commit)
+    clean_db.commit()
+    assert CdnAcmeUserV2.get_user(clean_db) is None
