@@ -47,6 +47,19 @@ def _emit_without_exception_catching(self, signal, task, *args, **kwargs):
     self._signal.send(signal, task, *args, **kwargs)
 
 
+@contextmanager
+def fallible_huey():
+    try:
+        huey.disconnect_signal(re_raise_exceptions)
+        huey.disconnect_signal(stop_task_from_retrying)
+        Huey._emit = default_emit
+        yield huey
+    finally:
+        huey._signal.connect(re_raise_exceptions, signals.SIGNAL_ERROR)
+        huey._signal.connect(stop_task_from_retrying, signals.SIGNAL_RETRYING)
+        Huey._emit = _emit_without_exception_catching
+
+
 default_emit = Huey._emit
 Huey._emit = _emit_without_exception_catching
 

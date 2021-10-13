@@ -91,6 +91,13 @@ class AppConfig(Config):
         self.RUN_RENEWALS = self.env_parser.bool("RUN_RENEWALS", False)
         self.RUN_BACKPORTS = self.env_parser.bool("RUN_BACKPORTS", False)
         self.MAX_ROUTES_PER_USER = 50
+        self.SMTP_TLS = self.env_parser.bool("SMTP_TLS")
+        self.SMTP_CERT = self.env_parser("SMTP_CERT", None)
+        self.SMTP_HOST = self.env_parser("SMTP_HOST")
+        self.SMTP_PORT = self.env_parser("SMTP_PORT")
+        self.SMTP_USER = self.env_parser("SMTP_USER")
+        self.SMTP_PASS = self.env_parser("SMTP_PASS")
+        self.SMTP_TO = self.env_parser("SMTP_TO")
 
 
 class LocalConfig(Config):
@@ -129,6 +136,18 @@ class LocalConfig(Config):
         self.RUN_RENEWALS = True
         self.RUN_BACKPORTS = True
         self.MAX_ROUTES_PER_USER = 3
+
+        self.SMTP_HOST = "localhost"
+        self.SMTP_PORT = 1025
+
+        # when testing, this goes to a fake smtp server that only prints stuff,
+        # so example.com is a safe host
+        self.SMTP_TO = "doesnt-matter@example.com"
+        self.SMTP_FROM = "no-reply@example.com"
+        self.SMTP_TLS = False
+        self.SMTP_USER = None
+        self.SMTP_PASS = None
+        self.RUN_CRON = True
 
 
 class UpgradeSchemaConfig(Config):

@@ -105,6 +105,13 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("AWS_POLL_MAX_ATTEMPTS", "10")
     monkeypatch.setenv("RUN_RENEWALS", "true")
     monkeypatch.setenv("RUN_BACKPORTS", "true")
+    monkeypatch.setenv("SMTP_TLS", "true")
+    monkeypatch.setenv("SMTP_CERT", "fake_cert")
+    monkeypatch.setenv("SMTP_HOST", "fake_smtp_host")
+    monkeypatch.setenv("SMTP_PORT", "fake_smtp_port")
+    monkeypatch.setenv("SMTP_USER", "fake_smtp_user")
+    monkeypatch.setenv("SMTP_PASS", "fake_smtp_pass")
+    monkeypatch.setenv("SMTP_TO", "fake_smtp_to")
 
 
 @pytest.mark.parametrize("env", ["local", "development", "staging", "production"])
@@ -144,6 +151,13 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.RUN_RENEWALS
     assert config.RUN_BACKPORTS
     assert config.MAX_ROUTES_PER_USER == 50
+    assert config.SMTP_TLS
+    assert config.SMTP_CERT == "fake_cert"
+    assert config.SMTP_HOST == "fake_smtp_host"
+    assert config.SMTP_PORT == "fake_smtp_port"
+    assert config.SMTP_USER == "fake_smtp_user"
+    assert config.SMTP_PASS == "fake_smtp_pass"
+    assert config.SMTP_TO == "fake_smtp_to"
 
     # import these here, so it's clear we're just importing them for this test
     import renewer.extensions
