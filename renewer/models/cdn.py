@@ -78,7 +78,7 @@ class CdnRoute(CdnModel, RouteModel):
     path = sa.Column(sa.Text)
     insecure_origin = sa.Column(sa.Boolean)
     challenge_json = sa.Column(postgresql.BYTEA)
-    user_data_id = sa.Column(sa.Integer)
+    user_data_id = sa.Column(sa.Integer, sa.ForeignKey("acme_user_v2.id"))
     certificates: List["CdnCertificate"] = orm.relationship(
         "CdnCertificate",
         order_by="desc(CdnCertificate.expires)",
@@ -172,7 +172,9 @@ class CdnAcmeUserV2(CdnModel, AcmeUserV2Model):
     registration_json = sa.Column(sa.Text)
 
     routes: List[CdnRoute] = orm.relation(
-        "CdnRoute", backref="acme_user", lazy="dynamic"
+        "CdnRoute",
+        backref="acme_user",
+        primaryjoin="(foreign(CdnRoute.acme_user_id)) == CdnAcmeUserV2.id",
     )
 
 
