@@ -15,6 +15,7 @@ from renewer.models.domain import (
 from renewer.tasks import iam, letsencrypt, s3
 from renewer.tasks import alb as alb_tasks
 from renewer.tasks import renewals
+from renewer.tasks import update_operations
 
 from tests.lib.fake_iam import FakeIAM
 from tests.lib.alb_fixtures import make_cert, make_route
@@ -385,6 +386,17 @@ def test_delete_nonexistent_old_certificate(
     )
 
     iam.delete_old_certificate(operation.id, alb_route.route_type)
+
+
+def test_marks_operation_complete(clean_db, alb_route: DomainRoute, immediate_huey):
+    operation = alb_route.create_renewal_operation()
+    clean_db.add(operation)
+    clean_db.commit()
+    operation_id = operation.id
+    update_operations.mark_complete(operation_id, alb_route.route_type)
+    clean_db.expunge_all()
+    operation = clean_db.query(DomainOperation).get(operation_id)
+    assert operation.state == "succeeded"
 
 
 def test_queues_all_renewals(clean_db, clean_huey, proxy, tasks):

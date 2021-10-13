@@ -8,7 +8,7 @@ from renewer.extensions import config
 from renewer.json_log import json_log
 from renewer.models.domain import DomainRoute
 from renewer.huey import huey
-from renewer.tasks import alb, cdn, iam, letsencrypt, s3
+from renewer.tasks import alb, cdn, iam, letsencrypt, s3, update_operations
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,7 @@ def get_domain_renewal_pipeline(alb_route: DomainRoute, session):
         .then(alb.remove_old_certificate, operation.id, alb_route.route_type)
         .then(alb.wait_for_cert_update, operation.id, alb_route.route_type)
         .then(iam.delete_old_certificate, operation.id, alb_route.route_type)
+        .then(update_operations.mark_complete, operation.id, alb_route.route_type)
     )
     return pipeline
 
@@ -87,5 +88,6 @@ def get_cdn_renewal_pipeline(cdn_route: CdnRoute, session):
         .then(cdn.associate_certificate, operation.id, cdn_route.route_type)
         .then(cdn.wait_for_distribution, operation.id, cdn_route.route_type)
         .then(iam.delete_old_certificate, operation.id, cdn_route.route_type)
+        .then(update_operations.mark_complete, operation.id, cdn_route.route_type)
     )
     return pipeline

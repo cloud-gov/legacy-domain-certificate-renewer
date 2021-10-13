@@ -10,7 +10,7 @@ from renewer.models.cdn import (
     CdnCertificate,
     CdnChallenge,
 )
-from renewer.tasks import cdn, iam, letsencrypt, s3, renewals
+from renewer.tasks import cdn, iam, letsencrypt, s3, renewals, update_operations
 
 from tests.lib.fake_iam import FakeIAM
 from tests.lib.cdn_fixtures import make_route, make_cert
@@ -338,6 +338,17 @@ def test_delete_nonexistent_old_certificate(
     )
 
     iam.delete_old_certificate(operation.id, cdn_route.route_type)
+
+
+def test_marks_operation_complete(clean_db, cdn_route: CdnRoute, immediate_huey):
+    operation = cdn_route.create_renewal_operation()
+    clean_db.add(operation)
+    clean_db.commit()
+    operation_id = operation.id
+    update_operations.mark_complete(operation_id, cdn_route.route_type)
+    clean_db.expunge_all()
+    operation = clean_db.query(CdnOperation).get(operation_id)
+    assert operation.state == "succeeded"
 
 
 def test_queues_all_renewals(clean_db, clean_huey, tasks):
