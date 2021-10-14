@@ -147,6 +147,7 @@ jobs:
         SMTP_TO: ((dev-smtp-to))
         SMTP_CERT: ((dev-smtp-cert)
         SMTP_TLS: ((dev-smtp-tls))
+        LOG_LEVEL: ((dev-log-level))
   on_failure:
     put: slack
     params:
@@ -225,6 +226,7 @@ jobs:
         SMTP_PORT: ((staging-smtp-port))
         SMTP_TO: ((staging-smtp-to))
         SMTP_TLS: ((staging-smtp-tls))
+        LOG_LEVEL: ((staging-log-level))
   on_failure:
     put: slack
     params:
@@ -303,6 +305,7 @@ jobs:
         SMTP_PORT: ((production-smtp-port))
         SMTP_TO: ((production-smtp-to))
         SMTP_TLS: ((production-smtp-tls))
+        LOG_LEVEL: ((production-log-level))
 
   on_failure:
     put: slack
