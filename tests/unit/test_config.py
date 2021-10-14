@@ -111,6 +111,7 @@ def mocked_env(vcap_application, vcap_services, monkeypatch):
     monkeypatch.setenv("SMTP_PORT", "fake_smtp_port")
     monkeypatch.setenv("SMTP_USER", "fake_smtp_user")
     monkeypatch.setenv("SMTP_PASS", "fake_smtp_pass")
+    monkeypatch.setenv("SMTP_FROM", "fake_smtp_from")
     monkeypatch.setenv("SMTP_TO", "fake_smtp_to")
 
 
@@ -157,6 +158,7 @@ def test_config_gets_credentials(env, monkeypatch, mocked_env):
     assert config.SMTP_PORT == "fake_smtp_port"
     assert config.SMTP_USER == "fake_smtp_user"
     assert config.SMTP_PASS == "fake_smtp_pass"
+    assert config.SMTP_FROM == "fake_smtp_from"
     assert config.SMTP_TO == "fake_smtp_to"
 
     # import these here, so it's clear we're just importing them for this test

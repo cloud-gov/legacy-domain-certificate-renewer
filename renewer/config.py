@@ -101,6 +101,7 @@ class AppConfig(Config):
         self.SMTP_PORT = self.env_parser("SMTP_PORT")
         self.SMTP_USER = self.env_parser("SMTP_USER")
         self.SMTP_PASS = self.env_parser("SMTP_PASS")
+        self.SMTP_FROM = self.env_parser("SMTP_FROM")
         self.SMTP_TO = self.env_parser("SMTP_TO")
 
 
