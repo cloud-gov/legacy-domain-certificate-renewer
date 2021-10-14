@@ -2,7 +2,7 @@ from contextlib import AbstractContextManager
 import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from renewer.json_log import json_log
 from renewer.extensions import config
@@ -28,9 +28,10 @@ def check_connections(
 class SessionHandler(AbstractContextManager):
     def __enter__(self):
         json_log(logger.debug, {"message": "opening db session"})
-        self.session = Session()
-        return self.session
+        self.session_registry = scoped_session(Session)
+        session = self.session_registry()
+        return session
 
     def __exit__(self, *args, **kwargs):
         json_log(logger.debug, {"message": "closing db session"})
-        self.session.close()
+        self.session_registry.remove()
