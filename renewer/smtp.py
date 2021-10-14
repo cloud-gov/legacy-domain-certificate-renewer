@@ -29,14 +29,12 @@ def send_email(email, subject, body):
 
 
 def send_failed_operation_alert(operation):
-    subject = (
-        f"[{config.FLASK_ENV}] - legacy-domain-certificate-renewer pipeline failed"
-    )
+    subject = f"[{config.ENV}] - legacy-domain-certificate-renewer pipeline failed"
     body = f"""
 <h1>Pipeline failed unexpectedly!</h1>
 
 operation id: {operation.id} <br/>
-service instance id: {operation.route_id} <br/>
-service instance type: {operation.service_instance.route} <br/>
+service instance id: {operation.route.instance_id} <br/>
+service instance type: {operation.route.route_type} <br/>
     """
     send_email(config.SMTP_TO, subject, body)
