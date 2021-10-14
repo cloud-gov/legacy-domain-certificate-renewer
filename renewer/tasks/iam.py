@@ -57,24 +57,22 @@ def upload_certificate(session, operation_id: int, instance_type: RouteType):
             PrivateKey=certificate.private_key_pem,
             CertificateChain=certificate.fullchain_pem,
         )
+        metadata = response["ServerCertificateMetadata"]
     except ClientError as e:
-        # TODO: there's an edge case here, where we uploaded the certificate but
-        # failed to persist the metadata to the database. If that happens, we really
-        # need to get the metadata back from IAM.
-        if (
-            e.response["Error"]["Code"] == "EntityAlreadyExistsException"
-            and certificate.iam_server_certificate_id is not None
-        ):
-            return
+        if e.response["Error"]["Code"] == "EntityAlreadyExistsException":
+            # this handles an edge case, where we uploaded the certificate but
+            # failed to persist the metadata to the database.
+            cert_response = iam.get_server_certificate(
+                ServerCertificateName=certificate.iam_server_certificate_name
+            )
+            metadata = cert_response["ServerCertificate"]["ServerCertificateMetadata"]
         else:
             raise e
 
-    certificate.iam_server_certificate_id = response["ServerCertificateMetadata"][
-        "ServerCertificateId"
-    ]
-    certificate.iam_server_certificate_arn = response["ServerCertificateMetadata"][
-        "Arn"
-    ]
+    cert_id = metadata["ServerCertificateId"]
+    cert_arn = metadata["Arn"]
+    certificate.iam_server_certificate_id = cert_id
+    certificate.iam_server_certificate_arn = cert_arn
 
     session.add(certificate)
     session.commit()

@@ -256,6 +256,71 @@ def test_upload_cert_to_iam(
     assert certificate.iam_server_certificate_arn.startswith("arn:aws:iam")
 
 
+def test_upload_cert_to_iam_a_second_time(
+    clean_db, alb_route: DomainRoute, immediate_huey, iam_govcloud
+):
+
+    operation = alb_route.create_renewal_operation()
+    certificate = DomainCertificate()
+    operation.certificate = certificate
+
+    certificate.fullchain_pem = """
+    -----BEGIN CERTIFICATE-----
+    look! a leaf cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    look! an intermediate cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    -----BEGIN CERTIFICATE-----
+    look! a CA cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    """
+    certificate.leaf_pem = """
+    -----BEGIN CERTIFICATE-----
+    look! a leaf cert!
+    these are longer in reality though
+    -----END CERTIFICATE-----
+    """
+    certificate.private_key_pem = """
+    -----BEGIN PRIVATE KEY-----
+    don't look! a private key!
+    these are longer in reality though
+    -----END PRIVATE KEY-----
+    """
+
+    clean_db.add_all([operation, alb_route, certificate])
+    clean_db.commit()
+    today = date.today().isoformat()
+    operation_id = operation.id
+
+    iam_govcloud.expect_upload_server_certificate_raising_duplicate(
+        name=f"{alb_route.instance_id}-{today}-{certificate.id}",
+        cert=certificate.leaf_pem,
+        private_key=certificate.private_key_pem,
+        chain=certificate.fullchain_pem,
+        path="/alb/test/",
+    )
+    iam_govcloud.expect_get_server_certificate(
+        name=f"{alb_route.instance_id}-{today}-{certificate.id}",
+        expiration=datetime.now() + timedelta(days=90),
+        path="/alb/test/",
+    )
+    clean_db.expunge_all()
+
+    iam.upload_certificate(operation_id, alb_route.route_type)
+    operation = clean_db.query(DomainOperation).get(operation_id)
+    certificate = operation.certificate
+    assert certificate.iam_server_certificate_name
+    assert certificate.iam_server_certificate_name.startswith(alb_route.instance_id)
+    assert certificate.iam_server_certificate_id
+    assert certificate.iam_server_certificate_id == "this-needs-to-be-sixteen-digits"
+    assert certificate.iam_server_certificate_arn
+    assert certificate.iam_server_certificate_arn.startswith("arn:aws:iam")
+
+
 def test_associate_cert(clean_db, alb_route: DomainRoute, immediate_huey, alb):
     operation = alb_route.create_renewal_operation()
     today = date.today()
