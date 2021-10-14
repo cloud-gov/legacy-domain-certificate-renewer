@@ -57,6 +57,7 @@ def wait_for_distribution(session, operation_id: int, route_type: RouteType):
             "message": "waiting for cloudfront distribution",
         },
     )
+    session.close()
     waiter = cloudfront.get_waiter("distribution_deployed")
     waiter.wait(
         Id=route.dist_id,

@@ -29,6 +29,9 @@ huey = RedisHuey(connection_pool=connection_pool)
 # an open session handle
 nonretriable_task = huey.context_task(db.SessionHandler(), as_argument=True)
 
+# special task for sleeping
+nonretriable_sessionless_task = huey.task()
+
 # These tasks retry every 10 minutes for four hours.
 # when using a `retriable_task`, the first argument to the function will be
 # an open session handle
