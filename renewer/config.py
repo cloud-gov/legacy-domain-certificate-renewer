@@ -1,4 +1,5 @@
 import re
+import logging
 
 from cfenv import AppEnv
 from environs import Env
@@ -33,6 +34,9 @@ class Config:
         self.ACME_POLL_TIMEOUT_IN_SECONDS = self.env_parser(
             "ACME_POLL_TIMEOUT_IN_SECONDS", 90
         )
+        level = self.env_parser("LOG_LEVEL", None)
+        if level is not None:
+            self.LOG_LEVEL = getattr(logging, level.upper())
 
 
 class AppConfig(Config):
