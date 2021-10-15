@@ -11,8 +11,12 @@ from renewer.models.domain import DomainModel
 
 logger = logging.getLogger(__name__)
 
-cdn_engine = create_engine(config.CDN_BROKER_DATABASE_URI)
-domain_engine = create_engine(config.DOMAIN_BROKER_DATABASE_URI)
+cdn_engine = create_engine(
+    config.CDN_BROKER_DATABASE_URI, pool_size=16, max_overflow=16
+)
+domain_engine = create_engine(
+    config.DOMAIN_BROKER_DATABASE_URI, pool_size=16, max_overflow=16
+)
 Session = sessionmaker(binds={CdnModel: cdn_engine, DomainModel: domain_engine})
 
 
