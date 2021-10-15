@@ -6,6 +6,7 @@ from renewer.json_log import json_log
 from renewer.models.cdn import CdnOperation, CdnRoute
 from renewer.extensions import config
 from renewer.models.common import RouteType
+from renewer.suppress import suppress
 
 
 logger = logging.getLogger(__name__)
@@ -58,10 +59,11 @@ def wait_for_distribution(session, operation_id: int, route_type: RouteType):
         },
     )
     waiter = cloudfront.get_waiter("distribution_deployed")
-    waiter.wait(
-        Id=route.dist_id,
-        WaiterConfig={
-            "Delay": config.AWS_POLL_WAIT_TIME_IN_SECONDS,
-            "MaxAttempts": config.AWS_POLL_MAX_ATTEMPTS,
-        },
-    )
+    with suppress("botocore.exceptions.WaiterError"):
+        waiter.wait(
+            Id=route.dist_id,
+            WaiterConfig={
+                "Delay": config.AWS_POLL_WAIT_TIME_IN_SECONDS,
+                "MaxAttempts": config.AWS_POLL_MAX_ATTEMPTS,
+            },
+        )
