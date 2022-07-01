@@ -346,6 +346,7 @@ resources:
   source:
     uri: https://github.com/cloud-gov/((name))
     branch: ((git-branch))
+    commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: dev-docker-image
   type: docker-image
@@ -397,7 +398,7 @@ resources:
   source:
     uri: ((pipeline-tasks-git-url))
     branch: ((pipeline-tasks-git-branch))
-
+    commit_verification_keys: ((cloud-gov-pgp-keys))
 
 ############################
 #  RESOURCE TYPES
