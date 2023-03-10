@@ -11,6 +11,7 @@ cf target -o "$CF_ORGANIZATION" -s "$CF_SPACE"
 # dummy app so we can run a task.
 cf push \
   -f src/manifests/upgrade-schema.yml \
+  -s cflinuxfs4 \
   -p src \
   -i 1 \
   --var CDN_DB_NAME="$CDN_DB_NAME" \
