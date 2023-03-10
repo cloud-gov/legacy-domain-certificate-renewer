@@ -9,6 +9,7 @@ applications:
   - ((DOMAIN_DB_NAME))
   buildpacks:
   - python_buildpack
+  stack: cflinuxfs4
   env:
     ENV: ((ENV))
     CDN_DATABASE_ENCRYPTION_KEY: ((CDN_DATABASE_ENCRYPTION_KEY))

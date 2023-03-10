@@ -12,5 +12,6 @@ applications:
   - ((REDIS_NAME))
   buildpacks:
   - python_buildpack
+  stack: cflinuxfs4
   env:
     ENV: ((ENV))
