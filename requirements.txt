@@ -99,7 +99,7 @@ sqlalchemy==1.4.23
     #   sqlalchemy-utils
 sqlalchemy-utils==0.37.8
     # via -r pip-tools/requirements.in
-urllib3==1.26.6
+urllib3==1.26.17
     # via
     #   botocore
     #   requests
