@@ -1,6 +1,6 @@
 -r ../requirements.txt
 black
-boto3-stubs[iam,cloudfront,elbv2]
+boto3-stubs[iam,cloudfront,elbv2]>1.34.33
 mypy
 pip-tools
 pytest
