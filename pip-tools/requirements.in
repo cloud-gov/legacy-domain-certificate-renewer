@@ -1,6 +1,6 @@
 acme
 alembic
-boto3>1.34.33
+boto3
 cfenv
 cryptography
 environs
