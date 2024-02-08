@@ -100,7 +100,7 @@ marshmallow==3.13.0
     # via
     #   -r pip-tools/../requirements.txt
     #   environs
-mypy==0.910
+mypy
     # via
     #   -r pip-tools/dev-requirements.in
     #   sqlalchemy
