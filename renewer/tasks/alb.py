@@ -33,7 +33,7 @@ def associate_certificate(session, operation_id: int, route_type: RouteType):
 
     alb.add_listener_certificates(
         ListenerArn=route_alb.listener_arn,
-        Certificates=[{"CertificateArn": certificate.iam_server_certificate_arn}],
+        Certificates=[{"CertificateArn": certificate.iam_server_certificate_arn}, ],
     )
 
 
