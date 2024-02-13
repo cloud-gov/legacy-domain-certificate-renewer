@@ -9,12 +9,12 @@ class FakeALB(FakeAWS):
     def expect_get_certificates_for_listener(
         self, listener_arn, num_certificates=0, add_cert_arn=None
     ):
-        certificates = [{"CertificateArn": "certificate-arn", "IsDefault": True}]
+        certificates = [{"CertificateArn": "certificate-arn"}]
         if add_cert_arn is not None:
-            certificates.append({"CertificateArn": add_cert_arn, "IsDefault": False})
+            certificates.append({"CertificateArn": add_cert_arn})
         for i in range(num_certificates):
             certificates.append(
-                {"CertificateArn": f"certificate-arn-{i}", "IsDefault": False}
+                {"CertificateArn": f"certificate-arn-{i}"}
             )
         self.stubber.add_response(
             "describe_listener_certificates",
@@ -27,8 +27,8 @@ class FakeALB(FakeAWS):
             "add_listener_certificates",
             {
                 "Certificates": [
-                    {"CertificateArn": "arn:2", "IsDefault": True},
-                    {"CertificateArn": iam_cert_arn, "IsDefault": False},
+                    {"CertificateArn": "arn:2"},
+                    {"CertificateArn": iam_cert_arn},
                 ]
             },
             {
