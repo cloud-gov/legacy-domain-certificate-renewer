@@ -78,7 +78,7 @@ pytz==2021.1
     #   pyrfc3339
 redis==3.5.3
     # via -r pip-tools/requirements.in
-requests==2.26.0
+requests==2.31.0
     # via
     #   acme
     #   requests-toolbelt
