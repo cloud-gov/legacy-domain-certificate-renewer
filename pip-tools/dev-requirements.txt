@@ -23,7 +23,7 @@ botocore==1.34.39
     #   -r pip-tools/../requirements.txt
     #   boto3
     #   s3transfer
-botocore-stubs==1.21.40
+botocore-stubs==1.34.37
     # via boto3-stubs
 build==1.0.3
     # via pip-tools
@@ -104,13 +104,13 @@ mypy==0.910
     # via
     #   -r pip-tools/dev-requirements.in
     #   sqlalchemy
-mypy-boto3-cloudfront==1.18.40
+mypy-boto3-cloudfront==1.34.0
     # via boto3-stubs
-mypy-boto3-elbv2==1.18.40
+mypy-boto3-elbv2==1.34.32
     # via boto3-stubs
-mypy-boto3-iam==1.18.40
+mypy-boto3-iam==1.34.8
     # via boto3-stubs
-mypy-extensions==0.4.3
+mypy-extensions==0.4.4
     # via
     #   black
     #   mypy
@@ -228,9 +228,15 @@ types-pyopenssl==20.0.1
     # via -r pip-tools/dev-requirements.in
 types-redis==3.5.8
     # via -r pip-tools/dev-requirements.in
-typing-extensions==3.10.0.2
+types-s3transfer==0.10.0
+    # via boto3-stubs
+typing-extensions==4.9.0
     # via
+    #   boto3-stubs
     #   mypy
+    #   mypy-boto3-cloudfront
+    #   mypy-boto3-elbv2
+    #   mypy-boto3-iam
     #   sqlalchemy2-stubs
 urllib3==1.26.6
     # via

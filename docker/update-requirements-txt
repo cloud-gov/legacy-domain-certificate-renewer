@@ -3,6 +3,8 @@
 set -euo pipefail
 
 export CUSTOM_COMPILE_COMMAND="./dev update-requirements"
+echo "Installing latest piptools"
+pip install pip-tools
 echo "Compiling requirements.txt"
 python -m piptools compile \
   --quiet \
