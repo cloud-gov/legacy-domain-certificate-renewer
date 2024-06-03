@@ -4,7 +4,7 @@ boto3-stubs[iam,cloudfront,elbv2]
 mypy
 pip-tools
 pytest
-pytest-watch
+pytest-watcher
 sqlalchemy[mypy]
 types-pyOpenSSL
 types-redis

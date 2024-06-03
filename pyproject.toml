@@ -18,6 +18,15 @@ exclude = '''
 )/
 '''
 
+[tool.pytest-watcher]
+now = true
+clear = true
+delay = 0.2
+runner = "pytest"
+runner_args = []
+patterns = ["renewer/*.py", "tests/*.py"]
+ignore_patterns = ["venv/*", ".venv/*"]
+
 [tool.mypy]
 plugins = ['sqlalchemy.ext.mypy.plugin']
 ignore_missing_imports = true

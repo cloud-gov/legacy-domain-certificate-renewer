@@ -45,8 +45,6 @@ click==8.1.7
     # via
     #   black
     #   pip-tools
-colorama==0.4.6
-    # via pytest-watch
 cryptography==42.0.7
     # via
     #   -r pip-tools/../requirements.txt
@@ -55,8 +53,6 @@ cryptography==42.0.7
     #   pyopenssl
     #   types-pyopenssl
     #   types-redis
-docopt==0.6.2
-    # via pytest-watch
 environs==11.0.0
     # via -r pip-tools/../requirements.txt
 exceptiongroup==1.2.1
@@ -153,10 +149,8 @@ pyrfc3339==1.1
     #   -r pip-tools/../requirements.txt
     #   acme
 pytest==8.2.1
-    # via
-    #   -r pip-tools/dev-requirements.in
-    #   pytest-watch
-pytest-watch==4.2.0
+    # via -r pip-tools/dev-requirements.in
+pytest-watcher==0.4.2
     # via -r pip-tools/dev-requirements.in
 python-dateutil==2.9.0.post0
     # via
@@ -204,6 +198,7 @@ tomli==2.0.1
     #   mypy
     #   pip-tools
     #   pytest
+    #   pytest-watcher
 types-awscrt==0.20.9
     # via botocore-stubs
 types-cffi==1.16.0.20240331
@@ -235,7 +230,7 @@ urllib3==1.26.18
     #   botocore
     #   requests
 watchdog==4.0.1
-    # via pytest-watch
+    # via pytest-watcher
 wheel==0.43.0
     # via pip-tools
 zipp==3.19.1
