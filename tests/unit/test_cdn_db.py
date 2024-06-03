@@ -13,7 +13,7 @@ from renewer import extensions
 def test_can_get_session():
     with db.SessionHandler() as session:
         result = session.execute(
-            "SELECT count(1) FROM certificates", bind=db.cdn_engine
+            sa.text("SELECT count(1) FROM certificates"), bind=db.cdn_engine
         )
         assert result.first() == (0,)
 
@@ -85,7 +85,7 @@ def test_stores_acmeuser_private_key_pem_encrypted(clean_db):
     clean_db.add(acme_user)
     clean_db.commit()
     row = clean_db.execute(
-        f"select private_key_pem from acme_user_v2 where id='{acme_user.id}'",
+        sa.text(f"select private_key_pem from acme_user_v2 where id='{acme_user.id}'"),
         bind_arguments={"bind": db.cdn_engine},
     ).first()
     assert row
@@ -99,7 +99,7 @@ def test_stores_service_instance_private_key_pem_encrypted(clean_db):
     clean_db.add(cert)
     clean_db.commit()
     row = clean_db.execute(
-        f"select private_key_pem from certificates where id='{cert.id}'",
+        sa.text(f"select private_key_pem from certificates where id='{cert.id}'"),
         bind_arguments={"bind": db.cdn_engine},
     ).first()
     assert row

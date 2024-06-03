@@ -29,7 +29,6 @@ filterwarnings = [
   # this is an issue with the ACME library - need to wait on them for a fix
   'ignore:X509Extension support in pyOpenSSL is deprecated. You should use the APIs in cryptography.:DeprecationWarning',
   # sqlalchemy upgrade warnings - we should be working through these
-  'ignore:Using plain strings to indicate SQL statements without using the text.*:sqlalchemy.exc.RemovedIn20Warning',
   'ignore:Passing bind arguments to Session.execute.*:sqlalchemy.exc.RemovedIn20Warning',
   'ignore:"[azA-Z]+" object is being merged into a Session along the backref cascade path for relationship .*:sqlalchemy.exc.RemovedIn20Warning',
   'ignore:The Query.get\(\) method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0.*:sqlalchemy.exc.LegacyAPIWarning',
