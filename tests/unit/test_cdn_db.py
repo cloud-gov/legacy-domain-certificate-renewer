@@ -85,7 +85,7 @@ def test_stores_acmeuser_private_key_pem_encrypted(clean_db):
     clean_db.add(acme_user)
     clean_db.commit()
     row = clean_db.execute(
-        sa.text(f"select private_key_pem from acme_user_v2 where id='{acme_user.id}'"),
+        sa.text(f"SELECT private_key_pem FROM acme_user_v2 WHERE id='{acme_user.id}'"),
         bind_arguments={"bind": db.cdn_engine},
     ).first()
     assert row
@@ -99,7 +99,7 @@ def test_stores_service_instance_private_key_pem_encrypted(clean_db):
     clean_db.add(cert)
     clean_db.commit()
     row = clean_db.execute(
-        sa.text(f"select private_key_pem from certificates where id='{cert.id}'"),
+        sa.text(f"SELECT private_key_pem FROM certificates WHERE id='{cert.id}'"),
         bind_arguments={"bind": db.cdn_engine},
     ).first()
     assert row
