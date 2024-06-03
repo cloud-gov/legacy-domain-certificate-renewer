@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+export CUSTOM_COMPILE_COMMAND="./dev update-requirements"
+echo "Installing latest piptools"
+pip install pip-tools
+echo "Compiling requirements.txt"
+python -m piptools compile \
+  --quiet \
+  --strip-extras \
+  --upgrade \
+  --output-file=requirements.txt \
+  pip-tools/requirements.in
+
+echo "Compiling dev-requirements.txt"
+python -m piptools compile \
+  --quiet \
+  --strip-extras \
+  --upgrade \
+  --output-file=pip-tools/dev-requirements.txt \
+  pip-tools/dev-requirements.in

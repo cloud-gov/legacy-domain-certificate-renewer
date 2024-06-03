@@ -34,6 +34,10 @@ main() {
       build_image
       run "$@"
       ;;
+    upgrade-requirements)
+      build_image
+      upgrade-requirements "$@"
+      ;;
     update-requirements)
       build_image
       update-requirements "$@"
@@ -115,6 +119,10 @@ update-requirements() {
   run "docker/update-requirements-txt"
 }
 
+upgrade-requirements() {
+  run "docker/upgrade-requirements-txt"
+}
+
 new-migration() {
   [[ "$#" -eq 1 ]] || usage "Missing migration description (e.g. 'added foo table')"
   run "./docker/start-servers.sh && alembic -c migrations/alembic.ini upgrade head && alembic -c migrations/alembic.ini revision --autogenerate -m \"$1\""
@@ -152,7 +160,13 @@ usage() {
 
     # Generate the pip-tools/*requirements.txt files from
     # pip-tools/*requirements.in
+    # without upgrading existing dependencies
     $me update-requirements
+
+    # Generate the pip-tools/*requirements.txt files from
+    # pip-tools/*requirements.in
+    # upgrading all packages to the latest allowed by their spec
+    $me upgrade-requirements
 
     # Run command 'foo' in the container
     $me run foo

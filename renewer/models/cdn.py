@@ -33,7 +33,7 @@ convention = {
 
 metadata = sa.MetaData(naming_convention=convention)
 
-CdnModel = declarative.declarative_base(metadata=metadata)
+CdnModel = orm.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
@@ -171,7 +171,7 @@ class CdnAcmeUserV2(CdnModel, AcmeUserV2Model):
     )
     registration_json = sa.Column(sa.Text)
 
-    routes: List[CdnRoute] = orm.relation(
+    routes: List[CdnRoute] = orm.relationship(
         "CdnRoute",
         backref="acme_user",
         primaryjoin="(foreign(CdnRoute.acme_user_id)) == CdnAcmeUserV2.id",

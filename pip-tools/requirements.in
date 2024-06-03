@@ -7,5 +7,5 @@ environs
 huey
 psycopg2
 redis
-sqlalchemy
+sqlalchemy<2
 sqlalchemy-utils
