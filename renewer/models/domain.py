@@ -32,7 +32,7 @@ convention = {
 }
 
 metadata = sa.MetaData(naming_convention=convention)
-DomainModel = declarative.declarative_base(metadata=metadata)
+DomainModel = orm.declarative_base(metadata=metadata)
 
 
 def db_encryption_key():
@@ -200,7 +200,7 @@ class DomainAcmeUserV2(DomainModel, AcmeUserV2Model):
     )
     registration_json = sa.Column(sa.Text)
 
-    routes: List[DomainRoute] = orm.relation(
+    routes: List[DomainRoute] = orm.relationship(
         "DomainRoute",
         backref="acme_user",
         primaryjoin="(foreign(DomainRoute.acme_user_id)) == DomainAcmeUserV2.id",
