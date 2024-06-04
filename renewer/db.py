@@ -1,7 +1,7 @@
 from contextlib import AbstractContextManager
 import logging
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from renewer.json_log import json_log
@@ -24,8 +24,9 @@ def check_connections(
     session_maker=Session, cdn_binding=cdn_engine, domain_binding=domain_engine
 ):
     session = session_maker()
-    session.execute("SELECT 1 FROM certificates", bind=cdn_binding)
-    session.execute("SELECT 1 FROM certificates", bind=domain_binding)
+    query = text('SELECT 1 FROM certificates')
+    session.execute(query, bind=cdn_binding)
+    session.execute(query, bind=domain_binding)
     session.close()
 
 
