@@ -45,11 +45,7 @@ jobs:
   - get: src
     params: {depth: 1}
     trigger: true
-  - get: secrets
-    # Remember to manually trigger a new build if you upload a new version
-    # of the credentials file.
-    trigger: false
-  - set_pipeline: ((name))
+  - set_pipeline: self
     file: src/ci/pipeline.yml
     var_files:
     - secrets/((name)).yml
@@ -129,14 +125,14 @@ jobs:
         LETS_ENCRYPT_REGISTRATION_EMAIL: ((lets_encrypt_registration_email))
         CDN_DATABASE_ENCRYPTION_KEY: ((dev-cdn-database-encryption-key))
         DOMAIN_DATABASE_ENCRYPTION_KEY: ((dev-domain-database-encryption-key))
-        SMTP_PASS: ((dev-smtp-pass))
-        SMTP_HOST: ((dev-smtp-host))
-        SMTP_USER: ((dev-smtp-user))
-        SMTP_FROM: ((dev-smtp-from))
-        SMTP_PORT: ((dev-smtp-port))
-        SMTP_TO: ((dev-smtp-to))
-        SMTP_CERT: ((dev-smtp-cert)
-        SMTP_TLS: ((dev-smtp-tls))
+        SMTP_PASS: ((smtp-pass))
+        SMTP_HOST: ((smtp-host))
+        SMTP_USER: ((smtp-user))
+        SMTP_FROM: ((smtp-from))
+        SMTP_PORT: ((smtp-port))
+        SMTP_TO: ((smtp-to))
+        SMTP_CERT: ((smtp-cert)
+        SMTP_TLS: ((smtp-tls))
         LOG_LEVEL: ((dev-log-level))
   on_failure:
     put: slack
@@ -209,13 +205,13 @@ jobs:
         DOMAIN_DATABASE_ENCRYPTION_KEY: ((staging-domain-database-encryption-key))
         RUN_RENEWALS: ((staging-run-renewals))
         RUN_BACKPORTS: ((staging-run-backports))
-        SMTP_PASS: ((staging-smtp-pass))
-        SMTP_HOST: ((staging-smtp-host))
-        SMTP_USER: ((staging-smtp-user))
-        SMTP_FROM: ((staging-smtp-from))
-        SMTP_PORT: ((staging-smtp-port))
-        SMTP_TO: ((staging-smtp-to))
-        SMTP_TLS: ((staging-smtp-tls))
+        SMTP_PASS: ((smtp-pass))
+        SMTP_HOST: ((smtp-host))
+        SMTP_USER: ((smtp-user))
+        SMTP_FROM: ((smtp-from))
+        SMTP_PORT: ((smtp-port))
+        SMTP_TO: ((smtp-to))
+        SMTP_TLS: ((smtp-tls))
         LOG_LEVEL: ((staging-log-level))
   on_failure:
     put: slack
@@ -288,13 +284,13 @@ jobs:
         DOMAIN_DATABASE_ENCRYPTION_KEY: ((production-domain-database-encryption-key))
         RUN_RENEWALS: ((production-run-renewals))
         RUN_BACKPORTS: ((production-run-backports))
-        SMTP_PASS: ((production-smtp-pass))
-        SMTP_HOST: ((production-smtp-host))
-        SMTP_USER: ((production-smtp-user))
-        SMTP_FROM: ((production-smtp-from))
-        SMTP_PORT: ((production-smtp-port))
-        SMTP_TO: ((production-smtp-to))
-        SMTP_TLS: ((production-smtp-tls))
+        SMTP_PASS: ((smtp-pass))
+        SMTP_HOST: ((smtp-host))
+        SMTP_USER: ((smtp-user))
+        SMTP_FROM: ((smtp-from))
+        SMTP_PORT: ((smtp-port))
+        SMTP_TO: ((smtp-to))
+        SMTP_TLS: ((smtp-tls))
         LOG_LEVEL: ((production-log-level))
 
   on_failure:
@@ -321,21 +317,13 @@ jobs:
 
 resources:
 
-- name: secrets
-  type: s3-iam
-  icon: cloud-lock
-  source:
-    region_name: ((concourse-varz-bucket-region))
-    bucket: ((concourse-varz-bucket))
-    versioned_file: ((name)).yml
-
 - name: src
   type: git
   icon: github-circle
   check_every: 10s
   source:
-    uri: https://github.com/cloud-gov/((name))
-    branch: ((git-branch))
+    uri: https://github.com/cloud-gov/legacy-domain-certificate-renewer
+    branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: dev-docker-image
@@ -386,8 +374,8 @@ resources:
   type: git
   icon: github-circle
   source:
-    uri: ((pipeline-tasks-git-url))
-    branch: ((pipeline-tasks-git-branch))
+    uri: https://github.com/cloud-gov/cg-pipeline-tasks
+    branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 ############################
