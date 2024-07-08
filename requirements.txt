@@ -4,13 +4,13 @@
 #
 #    ./dev update-requirements
 #
-acme==2.10.0
+acme==2.11.0
     # via -r pip-tools/requirements.in
-alembic==1.13.1
+alembic==1.13.2
     # via -r pip-tools/requirements.in
-boto3==1.34.118
+boto3==1.34.140
     # via -r pip-tools/requirements.in
-botocore==1.34.118
+botocore==1.34.140
     # via
     #   boto3
     #   s3transfer
@@ -22,7 +22,7 @@ cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==42.0.7
+cryptography==42.0.8
     # via
     #   -r pip-tools/requirements.in
     #   acme
@@ -34,7 +34,7 @@ furl==2.1.3
     # via cfenv
 greenlet==3.0.3
     # via sqlalchemy
-huey==2.5.0
+huey==2.5.1
     # via -r pip-tools/requirements.in
 idna==3.7
     # via requests
@@ -48,11 +48,11 @@ mako==1.3.5
     # via alembic
 markupsafe==2.1.5
     # via mako
-marshmallow==3.21.2
+marshmallow==3.21.3
     # via environs
 orderedmultidict==1.0.1
     # via furl
-packaging==24.0
+packaging==24.1
     # via marshmallow
 psycopg2==2.9.9
     # via -r pip-tools/requirements.in
@@ -72,11 +72,11 @@ pytz==2024.1
     # via
     #   acme
     #   pyrfc3339
-redis==5.0.4
+redis==5.0.7
     # via -r pip-tools/requirements.in
 requests==2.32.3
     # via acme
-s3transfer==0.10.1
+s3transfer==0.10.2
     # via boto3
 six==1.16.0
     # via
@@ -90,7 +90,7 @@ sqlalchemy==1.4.52
     #   sqlalchemy-utils
 sqlalchemy-utils==0.41.2
     # via -r pip-tools/requirements.in
-typing-extensions==4.12.1
+typing-extensions==4.12.2
     # via alembic
 urllib3==2.2.2
     # via
