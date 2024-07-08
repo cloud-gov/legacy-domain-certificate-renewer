@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-shopt -s inherit_errexit
+shopt -s inherit_errexit 2>/dev/null || true
 
 built_image_name="legacy-domain-certificate-renewer-dev"
 
 main() {
   [[ $# -eq 0 ]] && usage "Expected command."
-  [[ -v DEBUG ]] && set -x
+  if [[ "${DEBUG+x}" ]] ; then
+    set -x
+  fi
 
   cd "$(git rev-parse --show-toplevel)"
 
