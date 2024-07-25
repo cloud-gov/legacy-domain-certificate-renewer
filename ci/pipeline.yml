@@ -47,8 +47,6 @@ jobs:
     trigger: true
   - set_pipeline: self
     file: src/ci/pipeline.yml
-    var_files:
-    - secrets/((name)).yml
 
 - name: test
   plan:
