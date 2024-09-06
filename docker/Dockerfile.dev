@@ -1,4 +1,6 @@
-FROM python:3.11-slim as base
+ARG base_image
+
+FROM ${base_image} AS base
 
 # When building locally, these should be set to your UID/GID.  That way, any
 # files written to the $PWD mount will be owned by you.  This is not
@@ -9,7 +11,7 @@ ARG USER=app
 
 # In case the host user's GID is already in the base image.
 RUN grep -q ":$GID:" /etc/group \
- || groupadd --gid="$GID" "$USER"
+      || groupadd --gid="$GID" "$USER"
 
 RUN useradd \
       --home-dir="/home/$USER" \
@@ -23,22 +25,29 @@ RUN useradd \
       "$USER"
 
 RUN apt update \
- && apt -y upgrade \
- && apt install -y --no-install-recommends \
+      && apt -y upgrade \
+      && apt install -y --no-install-recommends \
       build-essential \
       libpq-dev \
       curl \
       gnupg2 \
       procps \
       git \
-      lsb-release
+      lsb-release \
+      ca-certificates \
+      python3.11 \
+      python3-pip \
+      python3.11-dev
+
+# Symlink python and pip to python3.11
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
 
 # Install Fake Pebble LE server
 COPY --from=letsencrypt/pebble /usr/bin/pebble /usr/bin/pebble
 COPY --from=letsencrypt/pebble /test/ /test/
 
 RUN cp /test/certs/pebble.minica.pem /usr/local/share/ca-certificates/pebble.crt \
- && update-ca-certificates
+      && update-ca-certificates
 
 # install redis
 COPY --from=redis:5.0 /usr/local/bin/redis-server /usr/bin/redis-server
@@ -47,40 +56,40 @@ COPY --from=redis:5.0 /usr/local/bin/redis-cli /usr/bin/redis-cli
 # Install Postgresql
 ENV PG_MAJOR=15
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main"\
-    > /etc/apt/sources.list.d/pgdg.list \
- && curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
- && apt update \
- && apt install -y --no-install-recommends "postgresql-$PG_MAJOR"
+      > /etc/apt/sources.list.d/pgdg.list \
+      && curl -sSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+      && apt update \
+      && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends "postgresql-$PG_MAJOR"
 
 ENV PGDATA /tmp/data
 ENV PGCONFIG /tmp/data/postgresql.conf
 ENV PATH $PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 
 RUN mkdir -p "$PGDATA" \
- && chown -R "$USER:" "$PGDATA" \
- && chmod 700 "$PGDATA"
+      && chown -R "$USER:" "$PGDATA" \
+      && chmod 700 "$PGDATA"
 
 ENV POSTGRES_HOST_AUTH_METHOD=trust
 
 # Install local python packages
-RUN pip install --upgrade pip
+RUN python -m pip install --upgrade pip
 COPY pip-tools/dev-requirements.txt ./pip-tools/
-RUN pip install -r pip-tools/dev-requirements.txt
+RUN python -m pip install -r pip-tools/dev-requirements.txt
 
 WORKDIR /app
 RUN chown "$UID:$GID" .
 USER $UID:$GID
 
 RUN initdb \
-  && echo "unix_socket_directories = '$PGDATA'" >> "$PGCONFIG" \
-  && echo "log_statement = 'all'" >> "$PGCONFIG" \
-  && echo "log_connections = on" >> "$PGCONFIG" \
-  && echo "log_disconnections = on" >> "$PGCONFIG" \
-  && echo "log_line_prefix = ''" >> "$PGCONFIG" \
-  && sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" "$PGCONFIG" \
-  && grep -F "listen_addresses = '*'" "$PGCONFIG" \
-  && echo 'CREATE DATABASE "local-development-cdn"' | postgres --single -D "$PGDATA" postgres \
-  && echo 'CREATE DATABASE "local-development-domain"' | postgres --single -D "$PGDATA" postgres
+      && echo "unix_socket_directories = '$PGDATA'" >> "$PGCONFIG" \
+      && echo "log_statement = 'all'" >> "$PGCONFIG" \
+      && echo "log_connections = on" >> "$PGCONFIG" \
+      && echo "log_disconnections = on" >> "$PGCONFIG" \
+      && echo "log_line_prefix = ''" >> "$PGCONFIG" \
+      && sed -ri "s!^#?(listen_addresses)\s*=\s*\S+.*!\1 = '*'!" "$PGCONFIG" \
+      && grep -F "listen_addresses = '*'" "$PGCONFIG" \
+      && echo 'CREATE DATABASE "local-development-cdn"' | postgres --single -D "$PGDATA" postgres \
+      && echo 'CREATE DATABASE "local-development-domain"' | postgres --single -D "$PGDATA" postgres
 
 COPY . .
 
