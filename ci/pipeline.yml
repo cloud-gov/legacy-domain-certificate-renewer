@@ -55,18 +55,9 @@ jobs:
     trigger: true
     passed: [reconfigure]
 
-  - put: dev-docker-image
-    # We push this docker image _only_ so that we can use it in the next task
-    # below.  :shrug: concourse.
-    params:
-      build: src
-      dockerfile: src/docker/Dockerfile.dev
-      tag_as_latest: true
-      cache: true
-
   - task: test
     # Run the tests using the image pushed above.
-    image: dev-docker-image
+    image: legacy-domain-certificate-renewer-testing
     config:
       platform: linux
       params:
@@ -324,14 +315,14 @@ resources:
     branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
-- name: dev-docker-image
-  type: docker-image
-  icon: docker
+- name: legacy-domain-certificate-renewer-testing
+  type: registry-image
   source:
-    email: ((docker-email))
-    username: ((docker-username))
-    password: ((docker-password))
-    repository: ((docker-image-dev))
+    aws_access_key_id: ((ecr_aws_key))
+    aws_secret_access_key: ((ecr_aws_secret))
+    repository: legacy-domain-certificate-renewer-testing
+    aws_region: us-gov-west-1
+    tag: latest
 
 - name: cf-dev
   type: cf
