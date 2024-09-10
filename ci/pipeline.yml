@@ -54,7 +54,7 @@ jobs:
     params: {depth: 1}
     trigger: true
     passed: [reconfigure]
-
+  - get: legacy-domain-certificate-renewer-testing
   - task: test
     # Run the tests using the image pushed above.
     image: legacy-domain-certificate-renewer-testing
