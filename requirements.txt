@@ -74,7 +74,7 @@ pytz==2024.1
     #   pyrfc3339
 redis==5.0.7
     # via -r pip-tools/requirements.in
-requests==2.32.3
+requests==2.32.4
     # via acme
 s3transfer==0.10.2
     # via boto3
