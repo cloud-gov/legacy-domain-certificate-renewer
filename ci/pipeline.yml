@@ -132,15 +132,6 @@ jobs:
       channel: ((slack-failure-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on development
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-success-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
 
 
 - name: staging
@@ -209,15 +200,6 @@ jobs:
         :x: FAILED to deploy legacy-domain-certificate-renewer on staging
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-failure-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on staging
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-success-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
 
@@ -289,15 +271,6 @@ jobs:
         :x: FAILED to deploy legacy-domain-certificate-renewer on production
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-failure-channel))
-      username: ((slack-username))
-      icon_url: ((slack-icon-url))
-  on_success:
-    put: slack
-    params:
-      text: |
-        :white_check_mark: Successfully deployed legacy-domain-certificate-renewer on production
-        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
-      channel: ((slack-success-channel))
       username: ((slack-username))
       icon_url: ((slack-icon-url))
 
