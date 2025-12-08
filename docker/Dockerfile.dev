@@ -43,8 +43,8 @@ RUN apt update \
 RUN ln -s /usr/bin/python3.11 /usr/bin/python
 
 # Install Fake Pebble LE server
-COPY --from=letsencrypt/pebble /usr/bin/pebble /usr/bin/pebble
-COPY --from=letsencrypt/pebble /test/ /test/
+COPY --from=ghcr.io/letsencrypt/pebble:latest /app /usr/bin/pebble
+COPY --from=ghcr.io/letsencrypt/pebble:latest /test/ /test/
 
 RUN cp /test/certs/pebble.minica.pem /usr/local/share/ca-certificates/pebble.crt \
       && update-ca-certificates
