@@ -1,6 +1,7 @@
 acme
 alembic
 boto3
+certbot>=5.2.1
 cfenv
 cryptography
 environs
