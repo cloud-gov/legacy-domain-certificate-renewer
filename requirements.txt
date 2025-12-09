@@ -98,15 +98,10 @@ sqlalchemy==1.4.54
 sqlalchemy-utils==0.41.2
     # via -r pip-tools/requirements.in
 typing-extensions==4.14.0
-<<<<<<< HEAD
     # via
     #   alembic
     #   pyopenssl
 urllib3==2.6.0
-=======
-    # via alembic
-urllib3==2.5.0
->>>>>>> 55f9e95 (update python packages)
     # via
     #   botocore
     #   requests
