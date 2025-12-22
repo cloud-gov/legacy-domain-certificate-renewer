@@ -59,7 +59,7 @@ mako==1.3.10
     # via alembic
 markupsafe==3.0.2
     # via mako
-marshmallow==4.0.0
+marshmallow==4.1.2
     # via environs
 orderedmultidict==1.0.1
     # via furl
